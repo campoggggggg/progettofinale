@@ -25,7 +25,7 @@ public class PrezzoService {
     public Double getPrezzo(String simbolo, String tipoAsset) {
         return switch (tipoAsset.toUpperCase()) {
             case "CRYPTO" -> getPrezzoSimbolo(simbolo);
-            case "AZIONE" -> getPrezzoAzione(simbolo);
+            case "STOCK" -> getPrezzoAzione(simbolo);
             default -> throw new IllegalArgumentException("Tipo asset non supportato: " + tipoAsset);
         };
     }
@@ -62,7 +62,7 @@ public class PrezzoService {
     public Double getPrezzoStorico(String simbolo, String tipoAsset, LocalDate data) {
         return switch (tipoAsset.toUpperCase()) {
             case "CRYPTO" -> getPrezzoStoricoCrypto(simbolo, data);
-            case "AZIONE" -> getPrezzoStoricoAzione(simbolo, data);
+            case "STOCK" -> getPrezzoStoricoAzione(simbolo, data);
             default -> throw new IllegalArgumentException("Tipo asset non supportato: " + tipoAsset);
         };
     }
