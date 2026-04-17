@@ -33,12 +33,24 @@ public class PortfolioService {
                 Utente utente = utenteRepository.findByNomeUtente(nomeUtente)
                                 .orElseThrow(() -> new RuntimeException("Utente non trovato"));
 
+                //recupera prezzo unità al momento dell'acquisto
+                Double prezzoUnitario = prezzoService.getPrezzoStorico(
+                        richiesta.getSimbolo(),
+                        richiesta.getTipoAsset().name(),
+                        richiesta.getDataAcquisto());
+
+                if (prezzoUnitario == null) {
+                        throw new RuntimeException("Impossibile recuperare il prezzo storico per " + richiesta.getSimbolo());
+                }
+
+                double costoTotale = prezzoUnitario * richiesta.getQuantita();
+
                 Transazione t = new Transazione();
                 t.setSimbolo(richiesta.getSimbolo());
                 t.setTipoAsset(richiesta.getTipoAsset());
                 t.setQuantita(richiesta.getQuantita());
-                t.setPrezzoDiAcquisto(richiesta.getPrezzoDiAcquisto());
                 t.setDataAcquisto(richiesta.getDataAcquisto());
+                t.setPrezzoDiAcquisto(costoTotale); //salva costo della transazione
                 t.setUtente(utente);
 
                 transazioneRepository.save(t);
@@ -78,13 +90,13 @@ public class PortfolioService {
                                                         .mapToDouble(Transazione::getQuantita).sum();
 
                                         double costoTotale = lista.stream()
-                                                        .mapToDouble(t -> t.getQuantita() * t.getPrezzoDiAcquisto())
+                                                        .mapToDouble(Transazione::getPrezzoDiAcquisto)
                                                         .sum();
-
-                                        double prezzoMedio = costoTotale / quantitaTotale;
+                                        
+                                        double prezzoMedioPerUnita = costoTotale / quantitaTotale;
 
                                         Double prezzoCorrente = prezzoService.getPrezzo(
-                                                        simbolo, lista.get(0).getTipoAsset());
+                                                        simbolo, lista.get(0).getTipoAsset().name());
 
                                         if (prezzoCorrente == null)
                                                 return null;
@@ -97,7 +109,7 @@ public class PortfolioService {
                                                         simbolo,
                                                         lista.get(0).getTipoAsset().name(),
                                                         quantitaTotale,
-                                                        prezzoMedio,
+                                                        prezzoMedioPerUnita,
                                                         prezzoCorrente,
                                                         valoreAttuale,
                                                         profitLoss,
