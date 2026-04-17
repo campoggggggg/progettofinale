@@ -57,7 +57,7 @@ L'applicazione sarà disponibile su `http://localhost:8080`.
 ## Struttura del Progetto
 
 ```
-src/main/java/com/portfolio/
+src/main/java/com/koinsim/
 │
 ├── config/
 │   ├── CacheConfig.java          ← Redis + TTL 5 minuti
@@ -91,7 +91,7 @@ src/main/java/com/portfolio/
 │   ├── JwtFilter.java
 │   └── JwtUtil.java
 │
-└── PortfolioApplication.java
+└── KoinsimApplication.java
 ```
 
 ---
