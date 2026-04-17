@@ -15,6 +15,6 @@ public class TransazioneRequest {
     private String simbolo;
     private TipoAsset tipoAsset;
     private Double quantita;
-    private Double prezzoDiAcquisto;
+    //private Double prezzoDiAcquisto;
     private LocalDate dataAcquisto;
 }
