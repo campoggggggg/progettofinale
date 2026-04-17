@@ -48,8 +48,7 @@ public class PrezzoService {
         return webClient.get().uri(url).retrieve()
                 .bodyToMono(Map.class)
                 .map(corpo -> {
-                    Map<String, String> quotazione =
-                            (Map<String, String>) corpo.get("Global Quote");
+                    Map<String, String> quotazione = (Map<String, String>) corpo.get("Global Quote");
                     return Double.parseDouble(quotazione.get("05. price"));
                 }).block();
     }
