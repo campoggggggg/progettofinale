@@ -1,5 +1,6 @@
 package com.example.koinsim.service;
 
+import org.apache.catalina.User;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -7,6 +8,12 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import com.example.koinsim.dto.LoginRequest;
+import com.example.koinsim.dto.LoginResponse;
+import com.example.koinsim.model.Utente;
+import com.example.koinsim.repository.UtenteRepository;
+import com.example.koinsim.security.JwtUtil;
 
 @Service
 public class AuthService implements UserDetailsService{
