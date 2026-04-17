@@ -1,6 +1,6 @@
 package com.example.koinsim.service;
 
-import org.apache.catalina.User;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,7 +26,7 @@ public class AuthService implements UserDetailsService {
     public AuthService(UtenteRepository utenteRepository,
             PasswordEncoder passwordEncoder,
             JwtUtil jwtUtil,
-            AuthenticationManager authenticationManager) {
+            @Lazy AuthenticationManager authenticationManager) {
         this.utenteRepository = utenteRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
