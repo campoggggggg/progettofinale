@@ -1,0 +1,48 @@
+services:
+
+  db-koinsim:
+    image: mysql:8.0
+    container_name: mysql_db
+    environment:
+      MYSQL_DATABASE: koinsim_db
+      MYSQL_ROOT_PASSWORD: root
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - koinsim_net
+
+  redis-koinsim:
+    image: redis:7
+    container_name: redis_db
+    ports:
+      - "6379:6379"
+    networks:
+      - koinsim_net
+
+  app-koinsim:
+    build: .
+    container_name: spring_app
+    ports:
+      - "8080:8080"
+    depends_on:
+      db-koinsim:
+        condition: service_healthy
+      redis-koinsim:
+        condition: service_started
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-koinsim:3306/koinsim_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_SHOW_SQL=true
+      - SPRING_DATA_REDIS_HOST=redis-koinsim
+      - SPRING_DATA_REDIS_PORT=6379
+    networks:
+      - koinsim_net
+
+networks:
+  koinsim_net:
+    driver: bridge
