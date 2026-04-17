@@ -1,10 +1,5 @@
 package com.example.koinsim.config;
 
-<<<<<<< Updated upstream
-public class CacheConfig {
-    
-}
-=======
 import java.time.Duration;
 
 import org.springframework.cache.annotation.EnableCaching;
@@ -30,4 +25,3 @@ public class CacheConfig {
             .build();
     }
 }
->>>>>>> Stashed changes
