@@ -10,7 +10,7 @@ L'utente registra le proprie transazioni di acquisto e il sistema calcola il **P
 | Componente | Tecnologia |
 |---|---|
 | Backend | Spring Boot 3.x |
-| Persistenza | Spring Data JPA + H2 |
+| Persistenza | Spring Data JPA + MySQL 8 |
 | HTTP Client | WebClient (WebFlux) |
 | Cache | Spring Cache + Redis (TTL 5 min) |
 | Sicurezza | Spring Security + JWT |
@@ -24,6 +24,7 @@ L'utente registra le proprie transazioni di acquisto e il sistema calcola il **P
 
 - Java 17+
 - Maven 3.8+
+- MySQL 8+
 - Docker (per Redis)
 - Chiave API gratuita su [alphavantage.co](https://www.alphavantage.co)
 
@@ -31,13 +32,15 @@ L'utente registra le proprie transazioni di acquisto e il sistema calcola il **P
 
 ## Avvio
 
-**1. Avvia Redis con Docker**
+**1. Avvia MySQL e Redis con Docker**
 ```bash
+docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=portafogliodb mysql:8
 docker run -d -p 6379:6379 redis:7
 ```
 
 **2. Configura le variabili d'ambiente**
 ```bash
+export DB_PASSWORD=root
 export ALPHA_VANTAGE_KEY=la_tua_chiave
 export JWT_SECRET=chiave_segreta_minimo_256_caratteri
 ```
@@ -141,12 +144,15 @@ Authorization: Bearer <accessToken>
 
 ---
 
-## Configurazione application.properties
+## 🗄️ Configurazione application.properties
 
 ```properties
-spring.datasource.url=jdbc:h2:mem:portafogliodb
-spring.datasource.driver-class-name=org.h2.Driver
+spring.datasource.url=jdbc:mysql://localhost:3306/portafogliodb?useSSL=false&serverTimezone=UTC
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.datasource.username=root
+spring.datasource.password=${DB_PASSWORD}
 spring.jpa.hibernate.ddl-auto=update
+spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
 
 spring.data.redis.host=localhost
 spring.data.redis.port=6379
@@ -160,7 +166,7 @@ jwt.scadenza.refresh=604800000
 
 ---
 
-## Regole di Sviluppo
+## 📐 Regole di Sviluppo
 
 | Regola | Esempio |
 |---|---|
@@ -178,6 +184,11 @@ jwt.scadenza.refresh=604800000
 ## Dipendenze principali (pom.xml)
 
 ```xml
+<dependency>
+    <groupId>com.mysql</groupId>
+    <artifactId>mysql-connector-j</artifactId>
+    <scope>runtime</scope>
+</dependency>
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-data-redis</artifactId>
