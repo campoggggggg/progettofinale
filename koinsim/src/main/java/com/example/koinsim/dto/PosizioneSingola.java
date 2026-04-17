@@ -14,8 +14,8 @@ import lombok.NoArgsConstructor;
         private String tipoAsset;
         private Double quantita;
         private Double prezzoDiAcquisto;
-        private Double prezzoAttuale;
-        private Double valoreAttuale;
+        private Double prezzoAttuale;       //prezzo di 1 qnt di mercato
+        private Double valoreAttuale;       //prezzoAttuale * quantita che voglio comprare/vendere
         private Double profitLoss;
         private Double profitLossPerc;
     }
