@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
+
+import com.example.koinsim.dto.LoginRequest;
+import com.example.koinsim.dto.LoginResponse;
 import com.example.koinsim.service.AuthService;
 
 @RestController
