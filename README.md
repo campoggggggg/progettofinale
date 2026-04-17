@@ -144,7 +144,7 @@ Authorization: Bearer <accessToken>
 
 ---
 
-## 🗄️ Configurazione application.properties
+## Configurazione application.properties
 
 ```properties
 spring.datasource.url=jdbc:mysql://localhost:3306/portafogliodb?useSSL=false&serverTimezone=UTC
@@ -166,7 +166,7 @@ jwt.scadenza.refresh=604800000
 
 ---
 
-## 📐 Regole di Sviluppo
+## Regole di Sviluppo
 
 | Regola | Esempio |
 |---|---|
