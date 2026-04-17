@@ -1,10 +1,10 @@
 package com.example.koinsim.service;
 
+import com.example.koinsim.model.Transazione;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-
 
 import java.util.Map;
 
@@ -19,12 +19,10 @@ public class PrezzoService {
         this.webClient = webClient;
     }
 
-    // Dispatcher: smista verso il metodo corretto in base al tipo di asset
-    public Double getPrezzo(String simbolo, String tipoAsset) {
-        return switch (tipoAsset.toUpperCase()) {
-            case "CRYPTO" -> getPrezzoSimbolo(simbolo);
-            case "AZIONE" -> getPrezzoAzione(simbolo);
-            default -> throw new IllegalArgumentException("Tipo asset non supportato: " + tipoAsset);
+    public Double getPrezzo(String simbolo, Transazione.TipoAsset tipoAsset) {
+        return switch (tipoAsset) {
+            case CRYPTO -> getPrezzoSimbolo(simbolo);
+            case STOCK -> getPrezzoAzione(simbolo);
         };
     }
 

@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.koinsim.dto.RiepilogoPortafoglio;
+import com.example.koinsim.dto.TransazioneRequest;
+import com.example.koinsim.model.Transazione;
 import com.example.koinsim.service.PortfolioService;
 
 @RestController

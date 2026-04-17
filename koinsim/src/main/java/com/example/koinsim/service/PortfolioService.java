@@ -1,5 +1,6 @@
 package com.example.koinsim.service;
 
+import com.example.koinsim.dto.PosizioneSingola;
 import com.example.koinsim.dto.RiepilogoPortafoglio;
 import com.example.koinsim.dto.TransazioneRequest;
 import com.example.koinsim.model.Transazione;
@@ -16,90 +17,106 @@ import java.util.stream.Collectors;
 
 @Service
 public class PortfolioService {
-    private final TransazioneRepository transazioneRepository;
-    private final UtenteRepository utenteRepository;
-    private final PrezzoService prezzoService;
+        private final TransazioneRepository transazioneRepository;
+        private final UtenteRepository utenteRepository;
+        private final PrezzoService prezzoService;
 
-    public PortfolioService(TransazioneRepository transazioneRepository,
-                            UtenteRepository utenteRepository,
-                            PrezzoService prezzoService) {
-        this.transazioneRepository = transazioneRepository;
-        this.utenteRepository = utenteRepository;
-        this.prezzoService = prezzoService;
-    }
-
-    public void aggiungi(TransazioneRequest richiesta, String nomeUtente) {
-        Utente utente = utenteRepository.findByNomeUtente(nomeUtente)
-                .orElseThrow(() -> new RuntimeException("Utente non trovato"));
-
-        Transazione t = new Transazione();
-        t.setSimbolo(richiesta.getSimbolo());
-        t.setTipoAsset(richiesta.getTipoAsset());
-        t.setQuantita(richiesta.getQuantita());
-        t.setPrezzoDiAcquisto(richiesta.getPrezzoDiAcquisto());
-        t.setDataAcquisto(richiesta.getDataAcquisto());
-        t.setUtente(utente);
-
-        transazioneRepository.save(t);
-    }
-
-    public List<Transazione> lista(String nomeUtente) {
-        Utente utente = utenteRepository.findByNomeUtente(nomeUtente)
-                .orElseThrow(() -> new RuntimeException("Utente non trovato"));
-        return transazioneRepository.findByUtenteId(utente.getId());
-    }
-
-    public void elimina(Long id, String nomeUtente) {
-        Transazione t = transazioneRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Transazione non trovata"));
-
-        // Sicurezza: un utente può eliminare solo le proprie transazioni
-        if (!t.getUtente().getNomeUtente().equals(nomeUtente)) {
-            throw new AccessDeniedException("Operazione non autorizzata");
+        public PortfolioService(TransazioneRepository transazioneRepository,
+                        UtenteRepository utenteRepository,
+                        PrezzoService prezzoService) {
+                this.transazioneRepository = transazioneRepository;
+                this.utenteRepository = utenteRepository;
+                this.prezzoService = prezzoService;
         }
-        transazioneRepository.deleteById(id);
-    }
 
-    public RiepilogoPortafoglio calcolaPortafoglio(String nomeUtente) {
-        Utente utente = utenteRepository.findByNomeUtente(nomeUtente)
-                .orElseThrow(() -> new RuntimeException("Utente non trovato"));
+        public void aggiungi(TransazioneRequest richiesta, String nomeUtente) {
+                Utente utente = utenteRepository.findByNomeUtente(nomeUtente)
+                                .orElseThrow(() -> new RuntimeException("Utente non trovato"));
 
-        List<Transazione> transazioni = transazioneRepository.findByUtenteId(utente.getId());
+                Transazione t = new Transazione();
+                t.setSimbolo(richiesta.getSimbolo());
+                t.setTipoAsset(richiesta.getTipoAsset());
+                t.setQuantita(richiesta.getQuantita());
+                t.setPrezzoDiAcquisto(richiesta.getPrezzoDiAcquisto());
+                t.setDataAcquisto(richiesta.getDataAcquisto());
+                t.setUtente(utente);
 
-        // Raggruppa le transazioni per simbolo (es. tutti i Bitcoin insieme)
-        Map<String, List<Transazione>> perSimbolo = transazioni.stream()
-                .collect(Collectors.groupingBy(Transazione::getSimbolo));
+                transazioneRepository.save(t);
+        }
 
-        List<RiepilogoPortafoglio.RiepilogoAsset> riepilogo = perSimbolo.entrySet().stream()
-                .map(entry -> {
-                    String simbolo = entry.getKey();
-                    List<Transazione> lista = entry.getValue();
+        public List<Transazione> lista(String nomeUtente) {
+                Utente utente = utenteRepository.findByNomeUtente(nomeUtente)
+                                .orElseThrow(() -> new RuntimeException("Utente non trovato"));
+                return transazioneRepository.findByUtenteId(utente.getId());
+        }
 
-                    double quantitaTotale = lista.stream()
-                            .mapToDouble(Transazione::getQuantita).sum();
+        public void elimina(Long id, String nomeUtente) {
+                Transazione t = transazioneRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("Transazione non trovata"));
 
-                    double costoTotale = lista.stream()
-                            .mapToDouble(t -> t.getQuantita() * t.getPrezzoDiAcquisto()).sum();
+                if (!t.getUtente().getNomeUtente().equals(nomeUtente)) {
+                        throw new AccessDeniedException("Operazione non autorizzata");
+                }
+                transazioneRepository.deleteById(id);
+        }
 
-                    Double prezzoCorrente = prezzoService.getPrezzo(
-                            simbolo, lista.get(0).getTipoAsset());
+        public RiepilogoPortafoglio calcolaPortafoglio(String nomeUtente) {
+                Utente utente = utenteRepository.findByNomeUtente(nomeUtente)
+                                .orElseThrow(() -> new RuntimeException("Utente non trovato"));
 
-                    if (prezzoCorrente == null) return null;
+                List<Transazione> transazioni = transazioneRepository.findByUtenteId(utente.getId());
 
-                    double valoreCorrente = quantitaTotale * prezzoCorrente;
-                    double profittoPerdita = valoreCorrente - costoTotale;
-                    double percentuale = (profittoPerdita / costoTotale) * 100;
+                Map<String, List<Transazione>> perSimbolo = transazioni.stream()
+                                .collect(Collectors.groupingBy(Transazione::getSimbolo));
 
-                    return new RiepilogoPortafoglio.RiepilogoAsset(
-                            simbolo, quantitaTotale, costoTotale,
-                            valoreCorrente, profittoPerdita, percentuale);
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+                List<PosizioneSingola> posizioni = perSimbolo.entrySet().stream()
+                                .map(entry -> {
+                                        String simbolo = entry.getKey();
+                                        List<Transazione> lista = entry.getValue();
 
-        double totale = riepilogo.stream()
-                .mapToDouble(RiepilogoPortafoglio.RiepilogoAsset::getProfittoPerdita).sum();
+                                        double quantitaTotale = lista.stream()
+                                                        .mapToDouble(Transazione::getQuantita).sum();
 
-        return new RiepilogoPortafoglio(riepilogo, totale);
-    }
+                                        double costoTotale = lista.stream()
+                                                        .mapToDouble(t -> t.getQuantita() * t.getPrezzoDiAcquisto())
+                                                        .sum();
+
+                                        double prezzoMedio = costoTotale / quantitaTotale;
+
+                                        Double prezzoCorrente = prezzoService.getPrezzo(
+                                                        simbolo, lista.get(0).getTipoAsset());
+
+                                        if (prezzoCorrente == null)
+                                                return null;
+
+                                        double valoreAttuale = quantitaTotale * prezzoCorrente;
+                                        double profitLoss = valoreAttuale - costoTotale;
+                                        double profitLossPerc = (profitLoss / costoTotale) * 100;
+
+                                        return new PosizioneSingola(
+                                                        simbolo,
+                                                        lista.get(0).getTipoAsset().name(),
+                                                        quantitaTotale,
+                                                        prezzoMedio,
+                                                        prezzoCorrente,
+                                                        valoreAttuale,
+                                                        profitLoss,
+                                                        profitLossPerc);
+                                })
+                                .filter(Objects::nonNull)
+                                .collect(Collectors.toList());
+
+                double valoreGlobaleTotale = posizioni.stream()
+                                .mapToDouble(PosizioneSingola::getValoreAttuale).sum();
+                double costoTotaleGlobale = posizioni.stream()
+                                .mapToDouble(p -> p.getQuantita() * p.getPrezzoDiAcquisto()).sum();
+                double profitLossTotale = posizioni.stream()
+                                .mapToDouble(PosizioneSingola::getProfitLoss).sum();
+                double profitLossPercTotale = costoTotaleGlobale > 0
+                                ? (profitLossTotale / costoTotaleGlobale) * 100
+                                : 0;
+
+                return new RiepilogoPortafoglio(posizioni, valoreGlobaleTotale, costoTotaleGlobale,
+                                profitLossTotale, profitLossPercTotale);
+        }
 }
