@@ -18,6 +18,9 @@ public class PrezzoService {
     @Value("${alpha.vantage.api.key}")
     private String apiKey;
 
+    @Value("${coingecko.api.key}")
+    private String coingeckoApiKey;
+
     public PrezzoService(WebClient webClient) {
         this.webClient = webClient;
     }
@@ -35,7 +38,9 @@ public class PrezzoService {
         String url = "https://api.coingecko.com/api/v3/simple/price"
                 + "?ids=" + simbolo + "&vs_currencies=usd";
 
-        return webClient.get().uri(url).retrieve()
+        return webClient.get().uri(url)
+                .header("x-cg-demo-api-key", coingeckoApiKey)
+                .retrieve()
                 .bodyToMono(Map.class)
                 .map(corpo -> {
                     Map<String, Object> voce = (Map<String, Object>) corpo.get(simbolo);
@@ -73,7 +78,9 @@ public class PrezzoService {
         String url = "https://api.coingecko.com/api/v3/coins/" + simbolo
                 + "/history?date=" + dataFormattata + "&localization=false";
 
-        return webClient.get().uri(url).retrieve()
+        return webClient.get().uri(url)
+                .header("x-cg-demo-api-key", coingeckoApiKey)
+                .retrieve()
                 .bodyToMono(Map.class)
                 .map(corpo -> {
                     Map<String, Object> marketData = (Map<String, Object>) corpo.get("market_data");
@@ -93,6 +100,9 @@ public class PrezzoService {
                 .bodyToMono(Map.class)
                 .map(corpo -> {
                     Map<String, Object> serie = (Map<String, Object>) corpo.get("Time Series (Daily)");
+                    if (serie == null) {
+                        throw new RuntimeException("Alpha Vantage non ha restituito dati. Risposta: " + corpo);
+                    }
                     Map<String, String> giorno = (Map<String, String>) serie.get(dataFormattata);
                     if (giorno == null) {
                         throw new RuntimeException("Nessun dato disponibile per la data: " + dataFormattata);
