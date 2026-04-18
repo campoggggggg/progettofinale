@@ -7,7 +7,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -72,20 +74,27 @@ public class PrezzoService {
         };
     }
 
-    // CoinGecko: endpoint /coins/{id}/history?date=dd-MM-yyyy
+    // CoinGecko: market_chart/range con finestra di 2 giorni intorno alla data
     public Double getPrezzoStoricoCrypto(String simbolo, LocalDate data) {
-        String dataFormattata = data.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+        long from = data.atStartOfDay(ZoneOffset.UTC).toEpochSecond();
+        long to   = data.plusDays(1).atStartOfDay(ZoneOffset.UTC).toEpochSecond();
         String url = "https://api.coingecko.com/api/v3/coins/" + simbolo
-                + "/history?date=" + dataFormattata + "&localization=false";
+                + "/market_chart/range?vs_currency=usd&from=" + from + "&to=" + to;
 
         return webClient.get().uri(url)
                 .header("x-cg-demo-api-key", coingeckoApiKey)
                 .retrieve()
+                .onStatus(status -> status.isError(), response ->
+                        response.bodyToMono(String.class)
+                                .map(body -> new RuntimeException(
+                                        "CoinGecko " + response.statusCode() + ": " + body)))
                 .bodyToMono(Map.class)
                 .map(corpo -> {
-                    Map<String, Object> marketData = (Map<String, Object>) corpo.get("market_data");
-                    Map<String, Object> currentPrice = (Map<String, Object>) marketData.get("current_price");
-                    return ((Number) currentPrice.get("usd")).doubleValue();
+                    List<List<Number>> prices = (List<List<Number>>) corpo.get("prices");
+                    if (prices == null || prices.isEmpty()) {
+                        throw new RuntimeException("Nessun dato storico CoinGecko per: " + simbolo + " " + data);
+                    }
+                    return prices.get(0).get(1).doubleValue();
                 }).block();
     }
 
@@ -94,7 +103,7 @@ public class PrezzoService {
         String dataFormattata = data.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         String url = "https://www.alphavantage.co/query"
                 + "?function=TIME_SERIES_DAILY&symbol=" + simbolo
-                + "&outputsize=full&apikey=" + apiKey;
+                + "&apikey=" + apiKey;
 
         return webClient.get().uri(url).retrieve()
                 .bodyToMono(Map.class)
