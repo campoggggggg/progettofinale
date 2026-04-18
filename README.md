@@ -1,7 +1,7 @@
-# Piattaforma di Monitoraggio Investimenti — Crypto & Stocks
+# Koinsim — Simulatore di Portafoglio Crypto & Azioni
 
-Applicazione Spring Boot per tracciare un portafoglio finanziario simulato.  
-L'utente registra le proprie transazioni di acquisto e il sistema calcola il **Profit & Loss (P&L)** in tempo reale, recuperando i prezzi correnti da API esterne con un sistema di **cache Redis** per evitare di saturare i limiti di frequenza.
+Applicazione Spring Boot per tracciare un portafoglio finanziario e creare **scenari di simulazione** (what-if).  
+L'utente registra transazioni reali o simulate e il sistema calcola il **Profit & Loss (P&L)** in tempo reale, recuperando i prezzi correnti e storici da API esterne con un sistema di **cache Redis** per limitare le chiamate.
 
 ---
 
@@ -15,6 +15,7 @@ L'utente registra le proprie transazioni di acquisto e il sistema calcola il **P
 | Cache | Spring Cache + Redis (TTL 5 min) |
 | Sicurezza | Spring Security + JWT |
 | Build | Maven |
+| Deploy | Docker + Docker Compose |
 | API Crypto | CoinGecko API v3 |
 | API Azioni | Alpha Vantage |
 
@@ -24,68 +25,88 @@ L'utente registra le proprie transazioni di acquisto e il sistema calcola il **P
 
 - Java 17+
 - Maven 3.8+
-- MySQL 8+
-- Docker (per Redis)
+- Docker e Docker Compose
 - Chiave API gratuita su [alphavantage.co](https://www.alphavantage.co)
+- Chiave API gratuita (Demo) su [coingecko.com](https://www.coingecko.com/en/api)
 
 ---
 
 ## Avvio
 
-**1. Avvia MySQL e Redis con Docker**
+**1. Compila il JAR**
 ```bash
-docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=portafogliodb mysql:8
-docker run -d -p 6379:6379 redis:7
+.\mvnw.cmd package -DskipTests
 ```
 
-**2. Configura le variabili d'ambiente**
+**2. Avvia tutti i servizi con Docker Compose**
 ```bash
-export DB_PASSWORD=root
-export ALPHA_VANTAGE_KEY=la_tua_chiave
-export JWT_SECRET=chiave_segreta_minimo_256_caratteri
+docker-compose up --build
 ```
 
-**3. Compila e avvia**
-```bash
-mvn spring-boot:run
-```
+L'applicazione sarà disponibile su `http://localhost:8080`.  
+MySQL e Redis vengono avviati automaticamente dai container.
 
-L'applicazione sarà disponibile su `http://localhost:8080`.
+---
+
+## Limiti delle API esterne (piano gratuito)
+
+> **Importante:** le funzionalità di prezzo storico funzionano solo entro i seguenti intervalli di date.
+
+| API | Endpoint | Limite piano gratuito |
+|---|---|---|
+| CoinGecko (Demo) | `/market_chart/range` (storico crypto) | Ultimi **365 giorni** |
+| Alpha Vantage (Free) | `TIME_SERIES_DAILY` compact (storico azioni) | Ultimi **100 giorni di borsa (~5 mesi)** |
+
+Usare date precedenti a questi limiti causerà un errore `500`. Per storico più ampio è necessario sottoscrivere un piano premium.
 
 ---
 
 ## Struttura del Progetto
 
 ```
-src/main/java/com/koinsim/
+src/main/java/com/example/koinsim/
 │
 ├── config/
-│   ├── CacheConfig.java          ← Redis + TTL 5 minuti
-│   ├── SecurityConfig.java       ← SecurityFilterChain
-│   └── WebClientConfig.java      ← bean WebClient
+│   ├── AppConfig.java              ← BCryptPasswordEncoder bean
+│   ├── CacheConfig.java            ← Redis + TTL 5 minuti
+│   ├── SecurityConfig.java         ← SecurityFilterChain + JWT filter
+│   └── WebClientConfig.java        ← bean WebClient
 │
 ├── controller/
-│   ├── AuthController.java       ← /api/auth/**
-│   └── PortfolioController.java  ← /api/transazioni, /api/portafoglio
+│   ├── AuthController.java         ← /api/auth/**
+│   ├── PortfolioController.java    ← /api/transazioni, /api/portafoglio
+│   └── ScenarioController.java     ← /api/scenari/**
 │
 ├── service/
-│   ├── AuthService.java          ← login, JWT
-│   ├── PrezzoService.java        ← API esterne + cache
-│   └── PortfolioService.java     ← calcolo P&L
+│   ├── AuthService.java            ← registrazione, login, refresh token
+│   ├── PrezzoService.java          ← API esterne + cache
+│   ├── PortfolioService.java       ← calcolo P&L portafoglio reale
+│   ├── ScenarioService.java        ← interfaccia simulazioni
+│   └── ScenarioServiceImpl.java    ← implementazione simulazioni + proiezioni
 │
 ├── repository/
 │   ├── UtenteRepository.java
-│   └── TransazioneRepository.java
+│   ├── TransazioneRepository.java
+│   ├── ScenarioRepository.java
+│   └── TransazioneScenarioRepository.java
 │
 ├── model/
 │   ├── Utente.java
-│   └── Transazione.java
+│   ├── Transazione.java            ← enum TipoAsset { CRYPTO, STOCK }
+│   ├── Scenario.java
+│   └── TransazioneScenario.java
 │
 ├── dto/
 │   ├── LoginRequest.java
 │   ├── LoginResponse.java
 │   ├── TransazioneRequest.java
-│   └── RiepilogoPortafoglio.java
+│   ├── PosizioneSingola.java
+│   ├── RiepilogoPortafoglio.java
+│   ├── ScenarioRequest.java
+│   ├── ScenarioResponse.java
+│   ├── TransazioneScenarioRequest.java
+│   ├── TransazioneScenarioResponse.java
+│   └── ProiezioneScenario.java
 │
 ├── security/
 │   ├── JwtFilter.java
@@ -117,17 +138,25 @@ Authorization: Bearer <accessToken>
 
 | Metodo | URL | Auth | Descrizione |
 |---|---|---|---|
-| POST | `/api/auth/registrazione` | Registra un utente |
-| POST | `/api/auth/login` | Login |
-| POST | `/api/auth/refresh` | Refresh token |
-| POST | `/api/auth/logout` | Logout |
-| POST | `/api/transazioni` | Aggiunge una transazione |
-| GET | `/api/transazioni` | Elenco transazioni dell'utente |
-| DELETE | `/api/transazioni/{id}` | Elimina una transazione |
-| GET | `/api/portafoglio` | Riepilogo P&L del portafoglio |
-| POST | `/api/cache/svuota` | Forza il rinnovo dei prezzi |
+| POST | `/api/auth/registrazione` | No | Registra un utente |
+| POST | `/api/auth/login` | No | Login |
+| POST | `/api/auth/refresh` | No | Refresh token |
+| POST | `/api/auth/logout` | No | Logout |
+| POST | `/api/transazioni` | Sì | Aggiunge una transazione al portafoglio reale |
+| GET | `/api/transazioni` | Sì | Elenco transazioni dell'utente |
+| DELETE | `/api/transazioni/{id}` | Sì | Elimina una transazione |
+| GET | `/api/portafoglio` | Sì | Riepilogo P&L del portafoglio reale |
+| POST | `/api/cache/svuota` | Sì | Forza il rinnovo dei prezzi in cache |
+| POST | `/api/scenari` | Sì | Crea un nuovo scenario di simulazione |
+| GET | `/api/scenari` | Sì | Elenco scenari dell'utente |
+| GET | `/api/scenari/{id}` | Sì | Dettaglio scenario |
+| PUT | `/api/scenari/{id}` | Sì | Aggiorna nome/descrizione scenario |
+| DELETE | `/api/scenari/{id}` | Sì | Elimina scenario e tutte le sue transazioni |
+| POST | `/api/scenari/{id}/transazioni` | Sì | Aggiunge una transazione simulata allo scenario |
+| DELETE | `/api/scenari/{id}/transazioni/{tid}` | Sì | Rimuove una transazione dallo scenario |
+| GET | `/api/scenari/{id}/proiezioni` | Sì | P&L a oggi, +6 mesi, +1 anno, +5 anni |
 
-### Esempio — Aggiungere una transazione
+### Esempio — Aggiungere una transazione al portafoglio reale
 
 ```json
 POST /api/transazioni
@@ -137,8 +166,36 @@ Authorization: Bearer <accessToken>
   "simbolo": "bitcoin",
   "tipoAsset": "CRYPTO",
   "quantita": 0.5,
-  "prezzoDiAcquisto": 62000.00,
-  "dataAcquisto": "2024-04-10"
+  "dataAcquisto": "2024-10-01"
+}
+```
+
+> Il campo `prezzoDiAcquisto` **non va incluso**: viene calcolato automaticamente dal server tramite il prezzo storico dell'API.
+
+### Esempio — Creare uno scenario di simulazione
+
+```json
+POST /api/scenari
+Authorization: Bearer <accessToken>
+
+{
+  "nome": "Sim Bitcoin 2024",
+  "descrizione": "Cosa sarebbe successo comprando BTC a inizio 2024",
+  "budgetIniziale": 5000.00
+}
+```
+
+### Esempio — Aggiungere una transazione a uno scenario
+
+```json
+POST /api/scenari/1/transazioni
+Authorization: Bearer <accessToken>
+
+{
+  "simbolo": "bitcoin",
+  "tipoAsset": "CRYPTO",
+  "quantita": 0.1,
+  "dataAcquisto": "2024-10-01"
 }
 ```
 
@@ -147,21 +204,26 @@ Authorization: Bearer <accessToken>
 ## Configurazione application.properties
 
 ```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/portafogliodb?useSSL=false&serverTimezone=UTC
-spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
-spring.datasource.username=root
-spring.datasource.password=${DB_PASSWORD}
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+spring.application.name=koinsim
 
+# MySQL
+spring.datasource.url=jdbc:mysql://localhost:3306/koinsim_db?useSSL=false&serverTimezone=UTC
+spring.datasource.username=root
+spring.datasource.password=root
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+
+# JWT
+jwt.secret=mysupersecretkey1234567890abcdef
+
+# Redis
 spring.data.redis.host=localhost
 spring.data.redis.port=6379
-spring.cache.type=redis
 
-alpha.vantage.api.key=${ALPHA_VANTAGE_KEY}
-jwt.secret=${JWT_SECRET}
-jwt.scadenza.access=900000
-jwt.scadenza.refresh=604800000
+# API Keys
+coingecko.api.key=la_tua_chiave_demo
+alpha.vantage.api.key=la_tua_chiave
 ```
 
 ---
@@ -170,14 +232,15 @@ jwt.scadenza.refresh=604800000
 
 | Regola | Esempio |
 |---|---|
-| Variabili e metodi in italiano | `quantita`, `prezzoDiAcquisto`, `calcolaPortafoglio()` |
-| Tabelle DB al plurale | `utenti`, `transazioni` |
-| Entità JPA al singolare | `Utente`, `Transazione` |
-| DTO con suffisso descrittivo | `LoginRequest`, `RiepilogoPortafoglio` |
+| Variabili e metodi in italiano | `quantita`, `prezzoUnitario`, `calcolaPortafoglio()` |
+| Tabelle DB al plurale | `utenti`, `transazioni`, `scenari`, `transazioni_scenario` |
+| Entità JPA al singolare | `Utente`, `Transazione`, `Scenario`, `TransazioneScenario` |
+| DTO con suffisso descrittivo | `LoginRequest`, `RiepilogoPortafoglio`, `ProiezioneScenario` |
 | I controller non chiamano i repository | Passano sempre dal service |
 | Password sempre hashate | `BCryptPasswordEncoder` |
-| Il JWT non contiene dati sensibili | Solo `id` e `nomeUtente` nel payload |
+| Il JWT non contiene dati sensibili | Solo `nomeUtente` nel payload (subject) |
 | Ogni metodo che chiama API esterne ha `@Cacheable` | `PrezzoService` |
+| Il budget iniziale di uno scenario è immutabile | `@Column(updatable = false)` |
 
 ---
 
