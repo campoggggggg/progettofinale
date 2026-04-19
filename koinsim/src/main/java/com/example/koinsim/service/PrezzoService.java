@@ -50,7 +50,7 @@ public class PrezzoService {
                 }).block();
     }
 
-    @Cacheable(value = "prezziAzioni", key = "#simbolo")
+    @Cacheable(value = "prezziStock", key = "#simbolo")
     public Double getPrezzoAzione(String simbolo) {
         String url = "https://www.alphavantage.co/query"
                 + "?function=GLOBAL_QUOTE&symbol=" + simbolo
@@ -64,12 +64,10 @@ public class PrezzoService {
                 }).block();
     }
 
-    // ── Prezzo STORICO (usato da PortfolioService.aggiungi) ──────────
-
     public Double getPrezzoStorico(String simbolo, String tipoAsset, LocalDate data) {
         return switch (tipoAsset.toUpperCase()) {
             case "CRYPTO" -> getPrezzoStoricoCrypto(simbolo, data);
-            case "STOCK" -> getPrezzoStoricoAzione(simbolo, data);
+            case "STOCK" -> getPrezzoStoricoStock(simbolo, data);
             default -> throw new IllegalArgumentException("Tipo asset non supportato: " + tipoAsset);
         };
     }
@@ -99,7 +97,7 @@ public class PrezzoService {
     }
 
     // Alpha Vantage: TIME_SERIES_DAILY → estrae il giorno → (high + low) / 2
-    public Double getPrezzoStoricoAzione(String simbolo, LocalDate data) {
+    public Double getPrezzoStoricoStock(String simbolo, LocalDate data) {
         String dataFormattata = data.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         String url = "https://www.alphavantage.co/query"
                 + "?function=TIME_SERIES_DAILY&symbol=" + simbolo
