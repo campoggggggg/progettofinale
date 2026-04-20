@@ -90,7 +90,7 @@ public class ScenarioServiceImpl implements ScenarioService {
                 richiesta.getTipoAsset().name(),
                 LocalDate.now());
 
-        double costoAggiunta = prezzoUnitario * richiesta.getQuantita();
+        double costoAggiunta = transazione.getPrezzoDiAcquisto() * transazione.getQuantita();
         double spesaAttuale = costoTotale(scenario.getTransazioni());
 
         if (spesaAttuale + costoAggiunta > scenario.getBudgetIniziale()) {
@@ -103,6 +103,7 @@ public class ScenarioServiceImpl implements ScenarioService {
                 .tipoAsset(richiesta.getTipoAsset())
                 .quantita(richiesta.getQuantita())
                 .prezzoDiAcquisto(prezzoUnitario)
+                .dataAcquisto(richiesta.getDataAcquisto())
                 .utente(scenario.getUtente())
                 .build());
 
