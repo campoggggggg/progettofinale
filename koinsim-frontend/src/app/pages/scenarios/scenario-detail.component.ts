@@ -107,7 +107,7 @@ Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryS
         </div>
 
         <!-- Transactions Table -->
-        <div class="table-card" *ngIf="scenario.transazioni?.length > 0">
+        <div class="table-card" *ngIf="(scenario.transazioni?.length ?? 0) > 0">
           <h3>Asset nello Scenario</h3>
           <div class="table-wrapper">
             <table mat-table [dataSource]="scenario.transazioni">
