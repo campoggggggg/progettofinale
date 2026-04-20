@@ -1,6 +1,7 @@
 package com.example.koinsim.controller;
 
 import com.example.koinsim.dto.*;
+import com.example.koinsim.service.MonteCarloService;
 import com.example.koinsim.service.ScenarioService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import java.util.List;
 public class ScenarioController {
 
     private final ScenarioService scenarioService;
+    private final MonteCarloService monteCarloService;
 
     @PostMapping
     public ResponseEntity<ScenarioResponse> crea(
@@ -76,5 +78,12 @@ public class ScenarioController {
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails utente) {
         return ResponseEntity.ok(scenarioService.proiezioni(id, utente.getUsername()));
+    }
+
+    @GetMapping("/{id}/montecarlo")
+    public ResponseEntity<ProiezioneMonteCarlo> montecarlo(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails utente) {
+        return ResponseEntity.ok(monteCarloService.simulaScenario(id, utente.getUsername()));
     }
 }
