@@ -23,7 +23,7 @@ public class TransazioneScenario {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Transazione.TipoAsset tipoAsset;
+    private TipoAsset tipoAsset;
 
     @Column(nullable = false)
     private Double quantita;

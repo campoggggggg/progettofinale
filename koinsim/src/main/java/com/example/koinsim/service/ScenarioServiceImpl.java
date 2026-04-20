@@ -2,6 +2,7 @@ package com.example.koinsim.service;
 
 import com.example.koinsim.dto.*;
 import com.example.koinsim.model.Scenario;
+import com.example.koinsim.model.TipoAsset;
 import com.example.koinsim.model.Transazione;
 import com.example.koinsim.model.TransazioneScenario;
 import com.example.koinsim.model.Utente;
@@ -161,7 +162,7 @@ public class ScenarioServiceImpl implements ScenarioService {
         LocalDate oggi = LocalDate.now();
         boolean stimato = data.isAfter(oggi);
 
-        record AssetKey(String simbolo, Transazione.TipoAsset tipoAsset) {}
+        record AssetKey(String simbolo, TipoAsset tipoAsset) {}
         Map<AssetKey, Double> qtaPerAsset = new HashMap<>();
         for (TransazioneScenario t : transazioni) {
             qtaPerAsset.merge(new AssetKey(t.getSimbolo(), t.getTipoAsset()), t.getQuantita(), (a, b) -> a + b);

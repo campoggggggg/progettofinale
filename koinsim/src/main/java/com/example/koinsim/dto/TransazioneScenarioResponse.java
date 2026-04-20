@@ -1,6 +1,6 @@
 package com.example.koinsim.dto;
 
-import com.example.koinsim.model.Transazione.TipoAsset;
+import com.example.koinsim.model.TipoAsset;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

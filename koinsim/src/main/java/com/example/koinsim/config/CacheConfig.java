@@ -22,7 +22,7 @@ public class CacheConfig {
 
         return RedisCacheManager.builder(factory)
             .withCacheConfiguration("prezziCrypto", configurazione)
-            .withCacheConfiguration("prezziAzioni", configurazione)
+            .withCacheConfiguration("prezziStock", configurazione)
             .build();
     }
 }
