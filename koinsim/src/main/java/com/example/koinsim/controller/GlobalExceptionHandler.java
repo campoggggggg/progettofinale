@@ -3,6 +3,7 @@ package com.example.koinsim.controller;
 import com.example.koinsim.exception.ApiLimitException;
 import com.example.koinsim.exception.DataPersistenceException;
 import com.example.koinsim.exception.SymbolNotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -40,6 +41,12 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.joining("; "));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("error", "VALIDATION_ERROR", "message", details));
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleEntityNotFound(EntityNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", "NOT_FOUND", "message", ex.getMessage()));
     }
 
     @ExceptionHandler(IllegalStateException.class)
