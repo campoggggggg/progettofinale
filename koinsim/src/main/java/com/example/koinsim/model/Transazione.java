@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 
+
 @Entity
 @Table(name = "transazioni")
 @Getter
@@ -37,8 +38,4 @@ public class Transazione {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "utente_id", nullable = false)
     private Utente utente;
-
-    public enum TipoAsset {
-        CRYPTO, STOCK
-    }
 }

@@ -42,6 +42,12 @@ services:
       - SPRING_JPA_SHOW_SQL=true
       - SPRING_DATA_REDIS_HOST=redis-koinsim
       - SPRING_DATA_REDIS_PORT=6379
+      # API keys (sovrascrivono application.properties in produzione)
+      - COINGECKO_API_KEY=CG-qAsQKwSK8SwHu7Zv6FiWHgK2
+      - ALPHA_VANTAGE_API_KEY=946KJ68RKR54P6YS
+      # Market data
+      - MARKET_DATA_CSV_PATH=/app/data
+      - MARKET_DATA_REDIS_TTL_HOURS=24
     networks:
       - koinsim_net
 
