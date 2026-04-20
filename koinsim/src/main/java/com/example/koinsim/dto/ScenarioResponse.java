@@ -19,5 +19,5 @@ public class ScenarioResponse {
     private Double budgetIniziale;
     private Double budgetRimanente;
     private LocalDateTime dataCreazione;
-    private List<TransazioneScenarioResponse> transazioni;
+    private List<TransazioneRequest> transazioni;
 }
