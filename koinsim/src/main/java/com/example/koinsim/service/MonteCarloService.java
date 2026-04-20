@@ -71,12 +71,12 @@ public class MonteCarloService {
         Map<String, Double> prezziCorrenti = new LinkedHashMap<>();
 
         for (TransazioneScenario t : transazioni) {
-            String simbolo = t.getSimbolo();
+            String simbolo = t.getTransazione().getSimbolo();
             if (!datiMercato.containsKey(simbolo)) {
                 datiMercato.put(simbolo,
-                        marketDataService.fetchAndPersistAll(simbolo, t.getTipoAsset()));
+                        marketDataService.fetchAndPersistAll(simbolo, t.getTransazione().getTipoAsset()));
                 prezziCorrenti.put(simbolo,
-                        prezzoService.getPrezzo(simbolo, t.getTipoAsset().name()));
+                        prezzoService.getPrezzo(simbolo, t.getTransazione().getTipoAsset().name()));
             }
         }
 
@@ -85,25 +85,25 @@ public class MonteCarloService {
         Map<String, Double> sigmaPerSimbolo = new LinkedHashMap<>();
 
         Map<String, List<TransazioneScenario>> perSimbolo = transazioni.stream()
-                .collect(Collectors.groupingBy(TransazioneScenario::getSimbolo));
+                .collect(Collectors.groupingBy(t -> t.getTransazione().getSimbolo()));
 
         for (Map.Entry<String, List<TransazioneScenario>> entry : perSimbolo.entrySet()) {
             String simbolo = entry.getKey();
             List<TransazioneScenario> gruppo = entry.getValue();
             MarketDataResponse md = datiMercato.get(simbolo);
-            double totaleQty = gruppo.stream().mapToDouble(TransazioneScenario::getQuantita).sum();
+            double totaleQty = gruppo.stream().mapToDouble(t -> t.getTransazione().getQuantita()).sum();
             muPerSimbolo.put(simbolo,
-                    gruppo.stream().mapToDouble(t -> t.getQuantita() * md.getMu()).sum() / totaleQty);
+                    gruppo.stream().mapToDouble(t -> t.getTransazione().getQuantita() * md.getMu()).sum() / totaleQty);
             sigmaPerSimbolo.put(simbolo,
-                    gruppo.stream().mapToDouble(t -> t.getQuantita() * md.getSigma()).sum() / totaleQty);
+                    gruppo.stream().mapToDouble(t -> t.getTransazione().getQuantita() * md.getSigma()).sum() / totaleQty);
         }
 
         double costoTotale = transazioni.stream()
-                .mapToDouble(t -> t.getPrezzoUnitario() * t.getQuantita())
+                .mapToDouble(t -> t.getTransazione().getPrezzoDiAcquisto() * t.getTransazione().getQuantita())
                 .sum();
 
         double valoreCorrente = transazioni.stream()
-                .mapToDouble(t -> prezziCorrenti.get(t.getSimbolo()) * t.getQuantita())
+                .mapToDouble(t -> prezziCorrenti.get(t.getTransazione().getSimbolo()) * t.getTransazione().getQuantita())
                 .sum();
 
         double[] valoriSeiMesi = simulaPortafoglio(
@@ -154,7 +154,8 @@ public class MonteCarloService {
         double[] portafoglio = new double[N_SIMULAZIONI];
         for (int i = 0; i < N_SIMULAZIONI; i++) {
             for (TransazioneScenario t : transazioni) {
-                portafoglio[i] += valoriPerSimbolo.get(t.getSimbolo())[i] * t.getQuantita();
+                portafoglio[i] += valoriPerSimbolo.get(t.getTransazione().getSimbolo())[i]
+                        * t.getTransazione().getQuantita();
             }
         }
         return portafoglio;

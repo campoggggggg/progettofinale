@@ -3,6 +3,7 @@ package com.example.koinsim.service;
 import com.example.koinsim.dto.ProiezioneScenario;
 import com.example.koinsim.dto.ScenarioRequest;
 import com.example.koinsim.dto.ScenarioResponse;
+import com.example.koinsim.dto.TransazioneRequest;
 import com.example.koinsim.dto.TransazioneScenarioRequest;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.access.AccessDeniedException;
@@ -34,7 +35,7 @@ public interface ScenarioService {
      * Aggiunge una transazione simulata allo scenario recuperando il prezzo storico.
      * @throws IllegalStateException se la spesa supera il budgetIniziale
      */
-    void aggiungiTransazione(Long scenarioId, TransazioneScenarioRequest richiesta, String nomeUtente);
+    void aggiungiTransazione(Long scenarioId, TransazioneRequest richiesta, String nomeUtente);
 
     /** Rimuove una singola transazione dallo scenario. */
     void rimuoviTransazione(Long scenarioId, Long transazioneId, String nomeUtente);

@@ -58,9 +58,10 @@ public class ScenarioController {
     @PostMapping("/{id}/transazioni")
     public ResponseEntity<Void> aggiungiTransazione(
             @PathVariable Long id,
-            @RequestBody TransazioneScenarioRequest richiesta,
+            @RequestBody TransazioneRequest richiesta,
             @AuthenticationPrincipal UserDetails utente) {
         scenarioService.aggiungiTransazione(id, richiesta, utente.getUsername());
+            
         return ResponseEntity.status(201).build();
     }
 
