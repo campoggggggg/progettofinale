@@ -85,27 +85,20 @@ public class ScenarioServiceImpl implements ScenarioService {
     public void aggiungiTransazione(Long scenarioId, TransazioneScenarioRequest richiesta, String nomeUtente) {
         Scenario scenario = trovaConOwnership(scenarioId, nomeUtente);
 
-        double prezzoUnitario = prezzoService.getPrezzoStorico(
-                richiesta.getSimbolo(),
-                richiesta.getTipoAsset().name(),
-                richiesta.getDataAcquisto());
+        Transazione transazione = transazioneRepository.findById(richiesta.getTransazioneId())
+                .orElseThrow(() -> new EntityNotFoundException("Transazione non trovata"));
 
-        double costoAggiunta = prezzoUnitario * richiesta.getQuantita();
+        if (!transazione.getUtente().getId().equals(scenario.getUtente().getId())) {
+            throw new AccessDeniedException("La transazione non appartiene a questo utente");
+        }
+
+        double costoAggiunta = transazione.getPrezzoDiAcquisto() * transazione.getQuantita();
         double spesaAttuale = costoTotale(scenario.getTransazioni());
 
         if (spesaAttuale + costoAggiunta > scenario.getBudgetIniziale()) {
             throw new IllegalStateException(
                     "Spesa totale supererebbe il budget iniziale di " + scenario.getBudgetIniziale());
         }
-
-        Transazione transazione = transazioneRepository.save(Transazione.builder()
-                .simbolo(richiesta.getSimbolo())
-                .tipoAsset(richiesta.getTipoAsset())
-                .quantita(richiesta.getQuantita())
-                .prezzoDiAcquisto(prezzoUnitario)
-                .dataAcquisto(richiesta.getDataAcquisto())
-                .utente(scenario.getUtente())
-                .build());
 
         transazioneScenarioRepository.save(TransazioneScenario.builder()
                 .transazione(transazione)
