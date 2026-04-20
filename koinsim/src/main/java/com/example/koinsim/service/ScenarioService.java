@@ -4,7 +4,6 @@ import com.example.koinsim.dto.ProiezioneScenario;
 import com.example.koinsim.dto.ScenarioRequest;
 import com.example.koinsim.dto.ScenarioResponse;
 import com.example.koinsim.dto.TransazioneRequest;
-import com.example.koinsim.dto.TransazioneScenarioRequest;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.access.AccessDeniedException;
 
