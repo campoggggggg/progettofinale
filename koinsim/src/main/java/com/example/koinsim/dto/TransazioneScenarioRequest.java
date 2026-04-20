@@ -8,5 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TransazioneScenarioRequest {
+    private Long scenarioId;
     private Long transazioneId;
 }
