@@ -1,6 +1,5 @@
 package com.example.koinsim.service;
 
-import com.example.koinsim.model.Transazione;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
