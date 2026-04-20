@@ -1,0 +1,85 @@
+@use '@angular/material' as mat;
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background-color: #f0f2f5;
+}
+
+/* Utility */
+.spacer { flex: 1 1 auto; }
+
+/* Card griglia dashboard */
+.dashboard-grid {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+/* Metriche top */
+.metric-value {
+  font-size: 2rem;
+  font-weight: 500;
+  color: #3f51b5;
+}
+
+.metric-value.speso  { color: #e53935; }
+.metric-value.rimanente { color: #43a047; }
+
+/* Chart container */
+.chart-container {
+  position: relative;
+  width: 100%;
+}
+
+/* Allocazione bar */
+.allocation-bar {
+  height: 36px;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+
+  .segment {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 500;
+    font-size: 0.85rem;
+    transition: width 0.4s ease;
+  }
+
+  .segment-stock  { background-color: #3f51b5; }
+  .segment-crypto { background-color: #ffa726; }
+}
+
+/* Osservazioni */
+.osservazioni-content {
+  white-space: pre-wrap;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  min-height: 80px;
+}
+
+/* Chip asset */
+.chip-stock  { background: #e8eaf6 !important; color: #3f51b5 !important; }
+.chip-crypto { background: #fff3e0 !important; color: #e65100 !important; }
+
+/* Scrollable table */
+.table-wrapper {
+  overflow-x: auto;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+/* Percentile legend */
+.legend-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+.mat-mdc-card-title { font-size: 1rem !important; font-weight: 500 !important; }
