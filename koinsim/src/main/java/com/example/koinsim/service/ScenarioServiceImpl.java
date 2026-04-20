@@ -3,7 +3,6 @@ package com.example.koinsim.service;
 import com.example.koinsim.dto.*;
 import com.example.koinsim.model.Scenario;
 import com.example.koinsim.model.TipoAsset;
-import com.example.koinsim.model.Transazione;
 import com.example.koinsim.model.TransazioneScenario;
 import com.example.koinsim.model.Utente;
 import com.example.koinsim.repository.ScenarioRepository;
@@ -101,7 +100,7 @@ public class ScenarioServiceImpl implements ScenarioService {
                 .tipoAsset(richiesta.getTipoAsset())
                 .quantita(richiesta.getQuantita())
                 .prezzoUnitario(prezzoUnitario)
-                .dataAcquisto(richiesta.getDataAcquisto())
+                .dataAcquisto(LocalDate.now())
                 .scenario(scenario)
                 .build();
         transazioneScenarioRepository.save(t);
