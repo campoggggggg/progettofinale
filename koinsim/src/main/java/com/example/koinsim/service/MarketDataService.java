@@ -168,7 +168,6 @@ public class MarketDataService {
                             .high(Double.parseDouble(v.get("2. high")))
                             .low(Double.parseDouble(v.get("3. low")))
                             .close(Double.parseDouble(v.get("4. close")))
-                            .volume(Long.parseLong(v.get("5. volume")))
                             .fonte(FONTE_ALPHA)
                             .build();
                 })
@@ -213,7 +212,6 @@ public class MarketDataService {
                     .high(((Number) candle.get(2)).doubleValue())
                     .low(((Number) candle.get(3)).doubleValue())
                     .close(((Number) candle.get(4)).doubleValue())
-                    // il volume non è disponibile nell'endpoint OHLC
                     .fonte(FONTE_COINGECKO)
                     .build());
         }
@@ -256,18 +254,17 @@ public class MarketDataService {
 
             try (PrintWriter writer = new PrintWriter(new FileWriter(filePath.toFile(), true))) {
                 if (!fileEsisteva) {
-                    writer.println("symbol,date,open,high,low,close,volume,source");
+                    writer.println("symbol,date,open,high,low,close,source");
                 }
                 prezzi.stream()
                         .sorted(Comparator.comparing(PrezzoStorico::getData))
-                        .forEach(p -> writer.printf("%s,%s,%s,%s,%s,%.6f,%s,%s%n",
+                        .forEach(p -> writer.printf("%s,%s,%s,%s,%s,%.6f,%s%n",
                                 p.getSimbolo(),
                                 p.getData().format(DATE_FMT),
                                 fmtDouble(p.getOpen()),
                                 fmtDouble(p.getHigh()),
                                 fmtDouble(p.getLow()),
                                 p.getClose(),
-                                p.getVolume() != null ? p.getVolume() : "",
                                 p.getFonte()));
             }
         } catch (IOException e) {

@@ -32,8 +32,6 @@ public class PrezzoStorico {
     @Column(nullable = false)
     private Double close;
 
-    private Long volume;
-
     /** "ALPHA_VANTAGE" o "COINGECKO" */
     @Column(nullable = false)
     private String fonte;
