@@ -4,7 +4,7 @@ services:
     image: mysql:8.0
     container_name: mysql_db
     ports:
-      - "3306:3306"
+      - "3307:3306"
     environment:
       MYSQL_DATABASE: koinsim_db
       MYSQL_ROOT_PASSWORD: root
@@ -48,6 +48,18 @@ services:
       # Market data
       - MARKET_DATA_CSV_PATH=/app/data
       - MARKET_DATA_REDIS_TTL_HOURS=24
+    networks:
+      - koinsim_net
+
+  frontend-koinsim:
+    build:
+      context: ../koinsim-frontend
+      dockerfile: Dockerfile
+    container_name: angular_app
+    ports:
+      - "4200:80"
+    depends_on:
+      - app-koinsim
     networks:
       - koinsim_net
 
