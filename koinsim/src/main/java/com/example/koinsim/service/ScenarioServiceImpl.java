@@ -82,13 +82,13 @@ public class ScenarioServiceImpl implements ScenarioService {
 
     @Override
     @Transactional
-    public void aggiungiTransazione(Long scenarioId, TransazioneScenarioRequest richiesta, String nomeUtente) {
+    public void aggiungiTransazione(Long scenarioId, TransazioneRequest richiesta, String nomeUtente) {
         Scenario scenario = trovaConOwnership(scenarioId, nomeUtente);
 
         double prezzoUnitario = prezzoService.getPrezzoStorico(
                 richiesta.getSimbolo(),
                 richiesta.getTipoAsset().name(),
-                richiesta.getDataAcquisto());
+                LocalDate.now());
 
         double costoAggiunta = prezzoUnitario * richiesta.getQuantita();
         double spesaAttuale = costoTotale(scenario.getTransazioni());
@@ -103,7 +103,6 @@ public class ScenarioServiceImpl implements ScenarioService {
                 .tipoAsset(richiesta.getTipoAsset())
                 .quantita(richiesta.getQuantita())
                 .prezzoDiAcquisto(prezzoUnitario)
-                .dataAcquisto(richiesta.getDataAcquisto())
                 .utente(scenario.getUtente())
                 .build());
 
