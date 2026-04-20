@@ -10,6 +10,7 @@ import com.example.koinsim.repository.UtenteRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,7 +38,7 @@ public class PortfolioService {
                 Double prezzoUnitario = prezzoService.getPrezzoStorico(
                         richiesta.getSimbolo(),
                         richiesta.getTipoAsset().name(),
-                        richiesta.getDataAcquisto());
+                        LocalDate.now());
 
                 if (prezzoUnitario == null) {
                         throw new RuntimeException("Impossibile recuperare il prezzo storico per " + richiesta.getSimbolo());
@@ -49,7 +50,7 @@ public class PortfolioService {
                 t.setSimbolo(richiesta.getSimbolo());
                 t.setTipoAsset(richiesta.getTipoAsset());
                 t.setQuantita(richiesta.getQuantita());
-                t.setDataAcquisto(richiesta.getDataAcquisto());
+                t.setDataAcquisto(LocalDate.now());
                 t.setPrezzoDiAcquisto(costoTotale); //salva costo della transazione
                 t.setUtente(utente);
 
