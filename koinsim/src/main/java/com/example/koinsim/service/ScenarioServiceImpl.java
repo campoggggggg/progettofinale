@@ -3,9 +3,11 @@ package com.example.koinsim.service;
 import com.example.koinsim.dto.*;
 import com.example.koinsim.model.Scenario;
 import com.example.koinsim.model.TipoAsset;
+import com.example.koinsim.model.Transazione;
 import com.example.koinsim.model.TransazioneScenario;
 import com.example.koinsim.model.Utente;
 import com.example.koinsim.repository.ScenarioRepository;
+import com.example.koinsim.repository.TransazioneRepository;
 import com.example.koinsim.repository.TransazioneScenarioRepository;
 import com.example.koinsim.repository.UtenteRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -25,6 +27,7 @@ public class ScenarioServiceImpl implements ScenarioService {
 
     private final ScenarioRepository scenarioRepository;
     private final TransazioneScenarioRepository transazioneScenarioRepository;
+    private final TransazioneRepository transazioneRepository;
     private final UtenteRepository utenteRepository;
     private final PrezzoService prezzoService;
 
@@ -95,15 +98,19 @@ public class ScenarioServiceImpl implements ScenarioService {
                     "Spesa totale supererebbe il budget iniziale di " + scenario.getBudgetIniziale());
         }
 
-        TransazioneScenario t = TransazioneScenario.builder()
+        Transazione transazione = transazioneRepository.save(Transazione.builder()
                 .simbolo(richiesta.getSimbolo())
                 .tipoAsset(richiesta.getTipoAsset())
                 .quantita(richiesta.getQuantita())
-                .prezzoUnitario(prezzoUnitario)
-                .dataAcquisto(LocalDate.now())
+                .prezzoDiAcquisto(prezzoUnitario)
+                .dataAcquisto(richiesta.getDataAcquisto())
+                .utente(scenario.getUtente())
+                .build());
+
+        transazioneScenarioRepository.save(TransazioneScenario.builder()
+                .transazione(transazione)
                 .scenario(scenario)
-                .build();
-        transazioneScenarioRepository.save(t);
+                .build());
     }
 
     @Override
@@ -129,7 +136,7 @@ public class ScenarioServiceImpl implements ScenarioService {
         }
 
         LocalDate dataInizio = transazioni.stream()
-                .map(TransazioneScenario::getDataAcquisto)
+                .map(t -> t.getTransazione().getDataAcquisto())
                 .min(Comparator.naturalOrder())
                 .orElse(LocalDate.now());
 
@@ -151,7 +158,7 @@ public class ScenarioServiceImpl implements ScenarioService {
 
     private double costoTotale(List<TransazioneScenario> transazioni) {
         return transazioni.stream()
-                .mapToDouble(t -> t.getPrezzoUnitario() * t.getQuantita())
+                .mapToDouble(t -> t.getTransazione().getPrezzoDiAcquisto() * t.getTransazione().getQuantita())
                 .sum();
     }
 
@@ -164,7 +171,8 @@ public class ScenarioServiceImpl implements ScenarioService {
         record AssetKey(String simbolo, TipoAsset tipoAsset) {}
         Map<AssetKey, Double> qtaPerAsset = new HashMap<>();
         for (TransazioneScenario t : transazioni) {
-            qtaPerAsset.merge(new AssetKey(t.getSimbolo(), t.getTipoAsset()), t.getQuantita(), (a, b) -> a + b);
+            Transazione tr = t.getTransazione();
+            qtaPerAsset.merge(new AssetKey(tr.getSimbolo(), tr.getTipoAsset()), tr.getQuantita(), (a, b) -> a + b);
         }
 
         double valore = 0.0;
@@ -213,14 +221,17 @@ public class ScenarioServiceImpl implements ScenarioService {
         double spesa = costoTotale(scenario.getTransazioni());
 
         List<TransazioneScenarioResponse> transazioniDto = scenario.getTransazioni().stream()
-                .map(t -> TransazioneScenarioResponse.builder()
-                        .id(t.getId())
-                        .simbolo(t.getSimbolo())
-                        .tipoAsset(t.getTipoAsset())
-                        .quantita(t.getQuantita())
-                        .prezzoUnitario(t.getPrezzoUnitario())
-                        .dataAcquisto(t.getDataAcquisto())
-                        .build())
+                .map(t -> {
+                    Transazione tr = t.getTransazione();
+                    return TransazioneScenarioResponse.builder()
+                            .id(t.getId())
+                            .simbolo(tr.getSimbolo())
+                            .tipoAsset(tr.getTipoAsset())
+                            .quantita(tr.getQuantita())
+                            .prezzoUnitario(tr.getPrezzoDiAcquisto())
+                            .dataAcquisto(tr.getDataAcquisto())
+                            .build();
+                })
                 .collect(Collectors.toList());
 
         return ScenarioResponse.builder()
