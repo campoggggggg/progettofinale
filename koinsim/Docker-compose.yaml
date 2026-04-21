@@ -51,6 +51,16 @@ services:
     networks:
       - koinsim_net
 
+  frontend-koinsim:
+    build: ../frontend-koinsim
+    container_name: angular_app
+    ports:
+      - "4200:80"
+    depends_on:
+      - app-koinsim
+    networks:
+      - koinsim_net
+
 networks:
   koinsim_net:
     driver: bridge
