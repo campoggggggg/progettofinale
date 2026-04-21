@@ -1,0 +1,134 @@
+<div class="auth-wrapper">
+  <mat-card class="auth-card">
+    <!-- Logo / titolo -->
+    <mat-card-header class="auth-header">
+      <mat-icon class="auth-logo">show_chart</mat-icon>
+      <mat-card-title>Koinsim</mat-card-title>
+      <mat-card-subtitle>Simulatore di portafoglio</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <mat-tab-group animationDuration="200ms">
+
+        <!-- ── Tab Login ────────────────────────────────────── -->
+        <mat-tab label="Accedi">
+          <form
+            [formGroup]="loginForm"
+            (ngSubmit)="onLogin()"
+            class="auth-form"
+          >
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Nome utente</mat-label>
+              <input matInput formControlName="nomeUtente" autocomplete="username" />
+              <mat-error *ngIf="loginForm.get('nomeUtente')?.hasError('required')">
+                Campo obbligatorio
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Password</mat-label>
+              <input
+                matInput
+                [type]="hideLogin ? 'password' : 'text'"
+                formControlName="password"
+                autocomplete="current-password"
+              />
+              <button
+                mat-icon-button
+                matSuffix
+                type="button"
+                (click)="hideLogin = !hideLogin"
+              >
+                <mat-icon>{{ hideLogin ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+              <mat-error *ngIf="loginForm.get('password')?.hasError('required')">
+                Campo obbligatorio
+              </mat-error>
+            </mat-form-field>
+
+            <button
+              mat-raised-button
+              color="primary"
+              class="full-width submit-btn"
+              type="submit"
+              [disabled]="loginForm.invalid || loading"
+            >
+              @if (loading) {
+                <mat-spinner diameter="20" />
+              } @else {
+                Accedi
+              }
+            </button>
+          </form>
+        </mat-tab>
+
+        <!-- ── Tab Registrazione ───────────────────────────── -->
+        <mat-tab label="Registrati">
+          <form
+            [formGroup]="registerForm"
+            (ngSubmit)="onRegister()"
+            class="auth-form"
+          >
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Nome utente</mat-label>
+              <input matInput formControlName="nomeUtente" autocomplete="username" />
+              <mat-error *ngIf="registerForm.get('nomeUtente')?.hasError('required')">
+                Campo obbligatorio
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Email</mat-label>
+              <input matInput formControlName="email" autocomplete="email" type="email" />
+              <mat-error *ngIf="registerForm.get('email')?.hasError('required')">
+                Campo obbligatorio
+              </mat-error>
+              <mat-error *ngIf="registerForm.get('email')?.hasError('email')">
+                Email non valida
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Password</mat-label>
+              <input
+                matInput
+                [type]="hideReg ? 'password' : 'text'"
+                formControlName="password"
+                autocomplete="new-password"
+              />
+              <button
+                mat-icon-button
+                matSuffix
+                type="button"
+                (click)="hideReg = !hideReg"
+              >
+                <mat-icon>{{ hideReg ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+              <mat-error *ngIf="registerForm.get('password')?.hasError('required')">
+                Campo obbligatorio
+              </mat-error>
+              <mat-error *ngIf="registerForm.get('password')?.hasError('minlength')">
+                Minimo 6 caratteri
+              </mat-error>
+            </mat-form-field>
+
+            <button
+              mat-raised-button
+              color="primary"
+              class="full-width submit-btn"
+              type="submit"
+              [disabled]="registerForm.invalid || loading"
+            >
+              @if (loading) {
+                <mat-spinner diameter="20" />
+              } @else {
+                Registrati
+              }
+            </button>
+          </form>
+        </mat-tab>
+
+      </mat-tab-group>
+    </mat-card-content>
+  </mat-card>
+</div>

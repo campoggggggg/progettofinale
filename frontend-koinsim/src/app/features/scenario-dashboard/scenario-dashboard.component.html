@@ -1,0 +1,281 @@
+<!-- ── Toolbar ─────────────────────────────────────────────────────────── -->
+<mat-toolbar color="primary">
+  <button mat-icon-button (click)="goBack()" matTooltip="Torna alla lista">
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+  <mat-icon style="margin: 0 8px">show_chart</mat-icon>
+  <span>{{ scenario?.nome ?? 'Dashboard' }}</span>
+  <span class="spacer"></span>
+  <button mat-icon-button (click)="auth.logout()" matTooltip="Logout">
+    <mat-icon>logout</mat-icon>
+  </button>
+</mat-toolbar>
+
+<!-- ── Loading globale ────────────────────────────────────────────────── -->
+@if (loading) {
+  <div class="center-spinner">
+    <mat-spinner />
+    <p style="margin-top:16px;color:#666">Caricamento dati...</p>
+  </div>
+}
+
+@if (!loading && scenario) {
+  <div class="dash-container">
+
+    <!-- ════════════════════════════════════════════════════════════════
+         RIGA 1: metriche budget
+         ════════════════════════════════════════════════════════════════ -->
+    <div class="row-top">
+      <div class="metrics-group">
+        <div class="metric-section-label">TOTAL</div>
+        <div class="metrics-cards">
+
+          <mat-card class="metric-card">
+            <mat-card-content>
+              <div class="metric-label">BUDGET TOTALE</div>
+              <div class="metric-value">
+                {{ scenario.budgetIniziale | currency:'EUR':'symbol':'1.2-2' }}
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="metric-card">
+            <mat-card-content>
+              <div class="metric-label">SPESO</div>
+              <div class="metric-value speso">
+                {{ speso | currency:'EUR':'symbol':'1.2-2' }}
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="metric-card">
+            <mat-card-content>
+              <div class="metric-label">RIMANENTE</div>
+              <div class="metric-value rimanente">
+                {{ scenario.budgetRimanente | currency:'EUR':'symbol':'1.2-2' }}
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         ASSET ALLOCATION %
+         ════════════════════════════════════════════════════════════════ -->
+    <mat-card class="allocation-section">
+      <mat-card-header>
+        <mat-card-title>ASSET ALLOCATION %</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @if (scenario.transazioni.length === 0) {
+          <p class="empty-chart">Nessuna transazione presente</p>
+        } @else {
+          <div class="allocation-bar">
+            @if (allocationStock > 0) {
+              <div
+                class="segment segment-stock"
+                [style.width.%]="allocationStock"
+              >
+                {{ allocationStock | number:'1.1-1' }}%
+              </div>
+            }
+            @if (allocationCrypto > 0) {
+              <div
+                class="segment segment-crypto"
+                [style.width.%]="allocationCrypto"
+              >
+                {{ allocationCrypto | number:'1.1-1' }}%
+              </div>
+            }
+            @if (allocationRimanente > 0) {
+              <div
+                class="segment"
+                [style.width.%]="allocationRimanente"
+                style="background:#e0e0e0;color:#888"
+              >
+                {{ allocationRimanente | number:'1.1-1' }}%
+              </div>
+            }
+          </div>
+          <div class="allocation-labels">
+            <span><span class="legend-dot" style="background:#3f51b5"></span>Azioni</span>
+            <span><span class="legend-dot" style="background:#ffa726"></span>Crypto</span>
+            <span><span class="legend-dot" style="background:#e0e0e0"></span>Liquidità</span>
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         RIGA 2: Transazioni + Distribuzione portafoglio
+         ════════════════════════════════════════════════════════════════ -->
+    <div class="row-middle">
+
+      <!-- Transazioni -->
+      <mat-card class="osservazioni-card">
+        <mat-card-header>
+          <mat-card-title>TRANSAZIONI</mat-card-title>
+          <span class="spacer"></span>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="openAddTransaction()"
+            style="margin-right:8px"
+          >
+            <mat-icon>add</mat-icon> Aggiungi
+          </button>
+        </mat-card-header>
+
+        <mat-card-content>
+          @if (scenario.descrizione) {
+            <p class="osservazioni-content">{{ scenario.descrizione }}</p>
+            <mat-divider style="margin: 8px 0" />
+          }
+
+          @if (scenario.transazioni.length === 0) {
+            <p style="color:#999;text-align:center;padding:16px">
+              Nessuna transazione. Inizia aggiungendone una.
+            </p>
+          } @else {
+            <div class="table-wrapper">
+              <table mat-table [dataSource]="scenario.transazioni" class="transaction-table">
+
+                <ng-container matColumnDef="simbolo">
+                  <th mat-header-cell *matHeaderCellDef>Simbolo</th>
+                  <td mat-cell *matCellDef="let t">
+                    <strong>{{ t.simbolo }}</strong>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="tipo">
+                  <th mat-header-cell *matHeaderCellDef>Tipo</th>
+                  <td mat-cell *matCellDef="let t">
+                    <mat-chip [class]="t.tipoAsset === 'STOCK' ? 'chip-stock' : 'chip-crypto'">
+                      {{ t.tipoAsset }}
+                    </mat-chip>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="quantita">
+                  <th mat-header-cell *matHeaderCellDef>Quantità</th>
+                  <td mat-cell *matCellDef="let t">{{ t.quantita }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="prezzo">
+                  <th mat-header-cell *matHeaderCellDef>Prezzo acquisto</th>
+                  <td mat-cell *matCellDef="let t">
+                    {{ t.prezzoDiAcquisto | currency:'EUR':'symbol':'1.2-2' }}
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="totale">
+                  <th mat-header-cell *matHeaderCellDef>Totale</th>
+                  <td mat-cell *matCellDef="let t">
+                    {{ t.quantita * t.prezzoDiAcquisto | currency:'EUR':'symbol':'1.2-2' }}
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="data">
+                  <th mat-header-cell *matHeaderCellDef>Data</th>
+                  <td mat-cell *matCellDef="let t">{{ t.dataAcquisto }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="azioni">
+                  <th mat-header-cell *matHeaderCellDef></th>
+                  <td mat-cell *matCellDef="let t">
+                    <button
+                      mat-icon-button
+                      color="warn"
+                      matTooltip="Rimuovi"
+                      (click)="removeTransaction(t.id!)"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="txColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: txColumns"></tr>
+              </table>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Distribuzione portafoglio -->
+      <mat-card class="distribuzione-card">
+        <mat-card-header>
+          <mat-card-title>DISTRIBUZIONE PORTAFOGLIO</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          @if (scenario.transazioni.length === 0) {
+            <p class="empty-chart">Aggiungi transazioni</p>
+          } @else {
+            <div class="chart-container" style="height:260px">
+              <canvas #distribuzioneChart></canvas>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         GRAFICO P&L MONTE CARLO
+         ════════════════════════════════════════════════════════════════ -->
+    <mat-card class="pnl-card">
+      <mat-card-header>
+        <mat-card-title>P&amp;L (€) — Simulazione Monte Carlo</mat-card-title>
+        <span class="spacer"></span>
+        <div class="pnl-legend">
+          <span class="legend-dot" style="background:#2196F3"></span>
+          <span>10° Percentile</span>
+          <span class="legend-dot" style="background:#F44336;margin-left:12px"></span>
+          <span>50° Percentile</span>
+          <span class="legend-dot" style="background:#4CAF50;margin-left:12px"></span>
+          <span>90° Percentile</span>
+        </div>
+      </mat-card-header>
+
+      <mat-card-content>
+        @if (loadingMonteCarlo) {
+          <div class="center-spinner-small" style="height:200px">
+            <mat-spinner diameter="40" />
+            <p style="margin-top:8px;color:#666">Simulazione Monte Carlo in corso...</p>
+          </div>
+        } @else if (!montecarlo) {
+          <p class="empty-chart">
+            {{ scenario.transazioni.length === 0
+               ? 'Aggiungi transazioni per avviare la simulazione'
+               : 'Avvia la simulazione cliccando il pulsante' }}
+          </p>
+          @if (scenario.transazioni.length > 0) {
+            <div style="text-align:center;padding:16px">
+              <button mat-raised-button color="primary" (click)="loadMonteCarlo()">
+                <mat-icon>play_arrow</mat-icon> Avvia simulazione (10.000 percorsi)
+              </button>
+            </div>
+          }
+        } @else {
+          <div class="montecarlo-summary">
+            @for (orizzonte of montecarloSummary; track orizzonte.label) {
+              <div class="mc-item">
+                <div class="mc-label">{{ orizzonte.label }}</div>
+                <div class="mc-median" [class.positive]="orizzonte.pnl >= 0" [class.negative]="orizzonte.pnl < 0">
+                  {{ orizzonte.pnl | currency:'EUR':'symbol':'1.0-0' }}
+                  ({{ orizzonte.pnlPerc | number:'1.1-1' }}%)
+                </div>
+              </div>
+            }
+          </div>
+          <div class="chart-container" style="height:280px">
+            <canvas #pnlChart></canvas>
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+
+  </div>
+}
