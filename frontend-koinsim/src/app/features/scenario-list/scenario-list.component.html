@@ -1,0 +1,90 @@
+<!-- Toolbar -->
+<mat-toolbar color="primary">
+  <mat-icon style="margin-right:8px">show_chart</mat-icon>
+  <span>Koinsim</span>
+  <span class="spacer"></span>
+  <button mat-icon-button (click)="auth.logout()" matTooltip="Logout">
+    <mat-icon>logout</mat-icon>
+  </button>
+</mat-toolbar>
+
+<div class="list-container">
+
+  <!-- Header -->
+  <div class="list-header">
+    <h2>I tuoi scenari</h2>
+    <button mat-raised-button color="primary" (click)="openCreate()">
+      <mat-icon>add</mat-icon> Nuovo scenario
+    </button>
+  </div>
+
+  <!-- Loading -->
+  @if (loading) {
+    <div class="center-spinner">
+      <mat-spinner />
+    </div>
+  }
+
+  <!-- Lista scenari -->
+  @if (!loading && scenari.length === 0) {
+    <div class="empty-state">
+      <mat-icon class="empty-icon">folder_open</mat-icon>
+      <p>Nessuno scenario ancora. Crea il tuo primo scenario!</p>
+    </div>
+  }
+
+  <div class="scenari-grid">
+    @for (s of scenari; track s.id) {
+      <mat-card class="scenario-card" (click)="openDashboard(s.id)">
+        <mat-card-header>
+          <mat-icon mat-card-avatar color="primary">pie_chart</mat-icon>
+          <mat-card-title>{{ s.nome }}</mat-card-title>
+          <mat-card-subtitle>
+            Creato il {{ s.dataCreazione | date:'dd/MM/yyyy' }}
+          </mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content>
+          <p class="scenario-desc">{{ s.descrizione || '—' }}</p>
+
+          <div class="scenario-budget">
+            <div class="budget-item">
+              <span class="budget-label">Budget</span>
+              <span class="budget-val">{{ s.budgetIniziale | currency:'EUR':'symbol':'1.0-0' }}</span>
+            </div>
+            <div class="budget-item">
+              <span class="budget-label">Speso</span>
+              <span class="budget-val speso">
+                {{ s.budgetIniziale - s.budgetRimanente | currency:'EUR':'symbol':'1.0-0' }}
+              </span>
+            </div>
+            <div class="budget-item">
+              <span class="budget-label">Disponibile</span>
+              <span class="budget-val rimanente">
+                {{ s.budgetRimanente | currency:'EUR':'symbol':'1.0-0' }}
+              </span>
+            </div>
+          </div>
+
+          <mat-chip-set>
+            <mat-chip>{{ s.transazioni.length }} posizioni</mat-chip>
+          </mat-chip-set>
+        </mat-card-content>
+
+        <mat-card-actions align="end">
+          <button
+            mat-icon-button
+            color="warn"
+            matTooltip="Elimina scenario"
+            (click)="deleteScenario($event, s.id)"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+          <button mat-button color="primary">
+            Apri dashboard <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    }
+  </div>
+</div>
