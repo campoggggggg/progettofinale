@@ -17,8 +17,9 @@ public class TransazioneRequest {
     private Long id;
     private String simbolo;
     private TipoAsset tipoAsset;
-    private Double quantita;
-    private Double prezzoDiAcquisto;
-    private LocalDate dataAcquisto;
+    private Double percentuale;      // % del budget iniziale (solo in input)
+    private Double quantita;         // calcolato dal backend (solo in output)
+    private Double prezzoDiAcquisto; // calcolato dal backend (solo in output)
+    private LocalDate dataAcquisto;  // calcolato dal backend (solo in output)
 
 }

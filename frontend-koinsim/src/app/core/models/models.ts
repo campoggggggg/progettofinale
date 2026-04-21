@@ -17,6 +17,14 @@ export type TipoAsset = 'STOCK' | 'CRYPTO';
 
 // ─── Transazione ─────────────────────────────────────────────────────────────
 
+/** Inviata al backend per creare una transazione */
+export interface TransazioneCreateRequest {
+  simbolo: string;
+  tipoAsset: TipoAsset;
+  percentuale: number; // % del budget iniziale
+}
+
+/** Ricevuta dal backend nell'elenco dello scenario */
 export interface TransazioneRequest {
   id?: number;
   simbolo: string;

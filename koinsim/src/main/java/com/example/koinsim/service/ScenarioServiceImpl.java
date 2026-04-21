@@ -85,15 +85,15 @@ public class ScenarioServiceImpl implements ScenarioService {
     public void aggiungiTransazione(Long scenarioId, TransazioneRequest richiesta, String nomeUtente) {
         Scenario scenario = trovaConOwnership(scenarioId, nomeUtente);
 
-        double prezzoUnitario = prezzoService.getPrezzoStorico(
+        double prezzoUnitario = prezzoService.getPrezzo(
                 richiesta.getSimbolo(),
-                richiesta.getTipoAsset().name(),
-                LocalDate.now());
+                richiesta.getTipoAsset().name());
 
-        double costoAggiunta = prezzoUnitario * richiesta.getQuantita();
+        double importo = scenario.getBudgetIniziale() * richiesta.getPercentuale() / 100.0;
+        double quantita = importo / prezzoUnitario;
         double spesaAttuale = costoTotale(scenario.getTransazioni());
 
-        if (spesaAttuale + costoAggiunta > scenario.getBudgetIniziale()) {
+        if (spesaAttuale + importo > scenario.getBudgetIniziale()) {
             throw new IllegalStateException(
                     "Spesa totale supererebbe il budget iniziale di " + scenario.getBudgetIniziale());
         }
@@ -101,7 +101,7 @@ public class ScenarioServiceImpl implements ScenarioService {
         Transazione transazione = transazioneRepository.save(Transazione.builder()
                 .simbolo(richiesta.getSimbolo())
                 .tipoAsset(richiesta.getTipoAsset())
-                .quantita(richiesta.getQuantita())
+                .quantita(quantita)
                 .prezzoDiAcquisto(prezzoUnitario)
                 .dataAcquisto(LocalDate.now())
                 .utente(scenario.getUtente())
