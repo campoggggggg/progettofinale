@@ -38,6 +38,11 @@ export class AddTransactionDialogComponent {
     percentuale: [null as number | null, [Validators.required, Validators.min(0.01), Validators.max(100)]],
   });
 
+  get budgetPercRimanente(): number {
+    if (!this.data?.budgetIniziale) return 0;
+    return (this.data.budgetRimanente / this.data.budgetIniziale) * 100;
+  }
+
   get simboloHint(): string {
     return this.form.get('tipoAsset')?.value === 'STOCK'
       ? 'Ticker maiuscolo (es. AAPL, TSLA)'

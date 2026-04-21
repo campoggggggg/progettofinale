@@ -152,6 +152,10 @@
   width: 100%;
 }
 
+.mat-column-data {
+  white-space: nowrap;
+}
+
 /* Chip asset type */
 mat-chip.chip-stock {
   background: #e8eaf6 !important;
@@ -182,6 +186,12 @@ mat-chip.chip-crypto {
   gap: 4px;
   font-size: 0.8rem;
   color: #555;
+}
+
+.percentile-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .montecarlo-summary {

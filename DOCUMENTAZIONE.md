@@ -1,6 +1,6 @@
 # KoinSim — Documentazione Tecnica
 
-**Simulatore di portafoglio finanziario** per azioni (stock) e criptovalute, con proiezioni storiche e simulazione Monte Carlo.
+**Simulatore di portafoglio finanziario** per azioni e criptovalute, con proiezioni a 6m, 1a e 5a con una simulazione Monte Carlo.
 
 ---
 
@@ -26,10 +26,7 @@
 
 ## 1. Panoramica del sistema
 
-KoinSim consente a utenti registrati di creare **scenari di investimento virtuali** con un budget predefinito, popolarli con transazioni simulate su stock e crypto, e analizzarne le proiezioni di valore nel tempo tramite:
-
-- **Proiezioni deterministiche**: valore del portafoglio a oggi, +6 mesi, +1 anno, +5 anni calcolato con prezzi reali (storici o correnti).
-- **Simulazione Monte Carlo (GBM)**: distribuzione probabilistica del valore futuro su 10.000 percorsi simulati con Geometric Brownian Motion, restituendo i percentili 10°/50°/90°.
+KoinSim consente a utenti registrati di creare **scenari di investimento virtuali** con un budget predefinito, popolarli con transazioni simulate su stock e crypto, e analizzarne le proiezioni di valore nel tempo tramite una **Simulazione Monte Carlo (GBM)**: distribuzione probabilistica del valore futuro su 10.000 percorsi simulati con Geometric Brownian Motion, restituendo i percentili 10°/50°/90°.
 
 Fonti dati esterne:
 - **Alpha Vantage** — dati storici OHLC e prezzo corrente per le azioni (STOCK).
