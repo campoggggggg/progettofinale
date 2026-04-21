@@ -12,8 +12,11 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.FileWriter;
@@ -79,6 +82,7 @@ public class MarketDataService {
      * Se i dati sono già stati recuperati nelle ultime {@code redisTtlHours} ore,
      * restituisce direttamente il risultato dalla cache senza toccare le API esterne.
      */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public MarketDataResponse fetchAndPersistAll(String symbol, TipoAsset type) {
         String sym      = normalizeSymbol(symbol, type);
         String fetchKey = FETCH_PREFIX + sym + ":" + type;
@@ -232,14 +236,19 @@ public class MarketDataService {
                 .filter(p -> !esistenti.contains(p.getData()))
                 .toList();
 
-        try {
-            if (!daSalvare.isEmpty()) {
+        if (!daSalvare.isEmpty()) {
+            try {
                 repository.saveAll(daSalvare);
+            } catch (DataIntegrityViolationException e) {
+                log.warn("Dati già presenti per {} (constraint violation ignorata)", symbol);
+            } catch (Exception e) {
+                log.warn("Salvataggio fallito per {}: {} — continuo con i dati già in DB", symbol, e.getMessage());
             }
+        }
+        try {
             appendCSV(symbol, type, daSalvare);
         } catch (Exception e) {
-            throw new DataPersistenceException(
-                    "Errore durante la persistenza dei dati per " + symbol, e);
+            log.warn("Scrittura CSV fallita per {} (non bloccante): {}", symbol, e.getMessage());
         }
     }
 
