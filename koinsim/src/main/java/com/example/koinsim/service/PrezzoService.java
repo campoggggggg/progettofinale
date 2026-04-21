@@ -1,5 +1,9 @@
 package com.example.koinsim.service;
 
+import com.example.koinsim.model.PrezzoStorico;
+import com.example.koinsim.repository.PrezzoStoricoRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -14,7 +18,10 @@ import java.util.Map;
 @Service
 public class PrezzoService {
 
+    private static final Logger log = LoggerFactory.getLogger(PrezzoService.class);
+
     private final WebClient webClient;
+    private final PrezzoStoricoRepository prezzoStoricoRepository;
 
     @Value("${alpha.vantage.api.key}")
     private String apiKey;
@@ -22,8 +29,9 @@ public class PrezzoService {
     @Value("${coingecko.api.key}")
     private String coingeckoApiKey;
 
-    public PrezzoService(WebClient webClient) {
+    public PrezzoService(WebClient webClient, PrezzoStoricoRepository prezzoStoricoRepository) {
         this.webClient = webClient;
+        this.prezzoStoricoRepository = prezzoStoricoRepository;
     }
 
     public Double getPrezzo(String simbolo, String tipoAsset) {
@@ -45,6 +53,9 @@ public class PrezzoService {
                 .bodyToMono(Map.class)
                 .map(corpo -> {
                     Map<String, Object> voce = (Map<String, Object>) corpo.get(simbolo);
+                    if (voce == null || voce.get("usd") == null) {
+                        throw new RuntimeException("Prezzo non disponibile per: " + simbolo);
+                    }
                     return ((Number) voce.get("usd")).doubleValue();
                 }).block();
     }
@@ -55,12 +66,28 @@ public class PrezzoService {
                 + "?function=GLOBAL_QUOTE&symbol=" + simbolo
                 + "&apikey=" + apiKey;
 
-        return webClient.get().uri(url).retrieve()
-                .bodyToMono(Map.class)
-                .map(corpo -> {
-                    Map<String, String> quotazione = (Map<String, String>) corpo.get("Global Quote");
-                    return Double.parseDouble(quotazione.get("05. price"));
-                }).block();
+        try {
+            return webClient.get().uri(url).retrieve()
+                    .bodyToMono(Map.class)
+                    .map(corpo -> {
+                        if (corpo.containsKey("Information") || corpo.containsKey("Note")) {
+                            throw new RuntimeException("rate_limit");
+                        }
+                        Map<String, String> quotazione = (Map<String, String>) corpo.get("Global Quote");
+                        if (quotazione == null || quotazione.get("05. price") == null || quotazione.get("05. price").isBlank()) {
+                            throw new RuntimeException("Prezzo non disponibile per il simbolo: " + simbolo);
+                        }
+                        return Double.parseDouble(quotazione.get("05. price"));
+                    }).block();
+        } catch (RuntimeException e) {
+            log.warn("Alpha Vantage non disponibile per {}, uso ultimo prezzo dal DB: {}", simbolo, e.getMessage());
+            List<PrezzoStorico> storici = prezzoStoricoRepository
+                    .findBySimboloAndFonteOrderByDataAsc(simbolo.toUpperCase(), "ALPHA_VANTAGE");
+            if (!storici.isEmpty()) {
+                return storici.get(storici.size() - 1).getClose();
+            }
+            throw new RuntimeException("Prezzo non disponibile per " + simbolo + " e nessun dato storico in DB.");
+        }
     }
 
     public Double getPrezzoStorico(String simbolo, String tipoAsset, LocalDate data) {

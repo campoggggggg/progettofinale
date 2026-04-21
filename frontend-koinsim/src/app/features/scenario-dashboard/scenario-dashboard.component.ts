@@ -11,7 +11,6 @@ import {
 } from '@angular/core';
 import { CommonModule, CurrencyPipe, PercentPipe } from '@angular/common';
 import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
 import { Chart } from 'chart.js';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatCardModule } from '@angular/material/card';
@@ -31,7 +30,7 @@ import {
   ScenarioResponse,
   ProiezioneScenario,
   ProiezioneMonteCarlo,
-  TransazioneRequest,
+  TransazioneCreateRequest,
 } from '../../core/models/models';
 import { AddTransactionDialogComponent } from '../dialogs/add-transaction-dialog.component';
 
@@ -635,10 +634,13 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
     this.dialog
       .open(AddTransactionDialogComponent, { 
         width: '460px',
-        data: { budgetIniziale: this.scenario?.budgetIniziale ?? 0 }
+        data: {
+          budgetIniziale: this.scenario?.budgetIniziale ?? 0,
+          budgetRimanente: this.scenario?.budgetRimanente ?? 0,
+        }
       })
       .afterClosed()
-      .subscribe((req: TransazioneRequest | undefined) => {
+      .subscribe((req: TransazioneCreateRequest | undefined) => {
         if (!req) return;
         this.scenarioSvc
           .aggiungiTransazione(Number(this.id), req)
@@ -700,20 +702,30 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
     if (existing) existing.destroy();
 
     const tx = this.scenario.transazioni;
-    const stockCost = tx
-      .filter(t => t.tipoAsset === 'STOCK')
-      .reduce((s, t) => s + t.quantita * t.prezzoDiAcquisto, 0);
-    const cryptoCost = tx
-      .filter(t => t.tipoAsset === 'CRYPTO')
-      .reduce((s, t) => s + t.quantita * t.prezzoDiAcquisto, 0);
     const liquidita = this.scenario.budgetRimanente;
 
     const labels: string[] = [];
     const data: number[] = [];
     const colors: string[] = [];
 
-    if (stockCost > 0) { labels.push('Azioni'); data.push(stockCost); colors.push('#4CAF50'); }
-    if (cryptoCost > 0) { labels.push('Crypto'); data.push(cryptoCost); colors.push('#FF9800'); }
+    const stockPalette = ['#4CAF50', '#81C784', '#2E7D32', '#A5D6A7', '#388E3C', '#C8E6C9'];
+    const cryptoPalette = ['#FF9800', '#FFB74D', '#E65100', '#FFCC80', '#F57C00', '#FFE0B2'];
+    let si = 0, ci = 0;
+
+    for (const t of tx) {
+      const cost = t.quantita * t.prezzoDiAcquisto;
+      if (cost <= 0) continue;
+      labels.push(t.simbolo);
+      data.push(cost);
+      if (t.tipoAsset === 'STOCK') {
+        colors.push(stockPalette[si % stockPalette.length]);
+        si++;
+      } else {
+        colors.push(cryptoPalette[ci % cryptoPalette.length]);
+        ci++;
+      }
+    }
+
     if (liquidita > 0) { labels.push('Liquidità'); data.push(liquidita); colors.push('#2196F3'); }
 
     const chart = new Chart(this.distribuzioneChartRef.nativeElement, {
@@ -733,7 +745,8 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
                 const val = ctx.parsed as number;
                 const total = (ctx.dataset.data as number[]).reduce((a, b) => a + b, 0);
                 const pct = ((val / total) * 100).toFixed(1);
-                return ` ${pct}%  (€${val.toLocaleString('it-IT', { maximumFractionDigits: 0 })})`;
+                const name = ctx.label ?? '';
+                return ` ${name}  ${pct}%  (€${val.toLocaleString('it-IT', { maximumFractionDigits: 0 })})`;
               },
             },
           },
@@ -749,12 +762,12 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
    * Y: P&L in € rispetto al costo totale
    */
   private drawPnlChart(): void {
-    if (!this.pnlChartRef || !this.montecarlo || !this.proiezioni) return;
+    if (!this.pnlChartRef || !this.montecarlo) return;
     const existing = this.charts.find(c => c.canvas === this.pnlChartRef.nativeElement);
     if (existing) existing.destroy();
 
     const mc = this.montecarlo;
-    const oggi = this.proiezioni.odierno.pnl;
+    const oggi = mc.seiMesi.valoreCorrente - mc.costoTotale;
     const costo = mc.costoTotale;
 
     // P&L = valore percentile - costo totale
