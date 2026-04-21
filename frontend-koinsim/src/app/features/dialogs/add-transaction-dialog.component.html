@@ -1,0 +1,56 @@
+<h2 mat-dialog-title>Aggiungi Transazione</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="dialog-form">
+
+    <!-- Tipo asset -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Tipo asset</mat-label>
+      <mat-select formControlName="tipoAsset">
+        <mat-option value="STOCK">Azione (STOCK)</mat-option>
+        <mat-option value="CRYPTO">Criptovaluta (CRYPTO)</mat-option>
+      </mat-select>
+      <mat-error *ngIf="form.get('tipoAsset')?.hasError('required')">
+        Campo obbligatorio
+      </mat-error>
+    </mat-form-field>
+
+    <!-- Simbolo -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Simbolo</mat-label>
+      <input matInput formControlName="simbolo" [placeholder]="simboloHint" />
+      <mat-hint>{{ simboloHint }}</mat-hint>
+      <mat-error *ngIf="form.get('simbolo')?.hasError('required')">
+        Campo obbligatorio
+      </mat-error>
+    </mat-form-field>
+
+    <!-- Percentuale budget -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>% del budget da investire</mat-label>
+      <input matInput type="number" formControlName="percentuale" min="0.01" max="100" step="0.1" />
+      <span matTextSuffix>%</span>
+      <mat-hint>Budget disponibile: {{ data?.budgetRimanente | currency:'EUR':'symbol':'1.0-0' }}</mat-hint>
+      <mat-error *ngIf="form.get('percentuale')?.hasError('required')">Campo obbligatorio</mat-error>
+      <mat-error *ngIf="form.get('percentuale')?.hasError('min')">Deve essere maggiore di 0</mat-error>
+      <mat-error *ngIf="form.get('percentuale')?.hasError('max')">Non può superare il 100%</mat-error>
+    </mat-form-field>
+
+    <p class="info-text">
+      Prezzo e data di acquisto vengono recuperati automaticamente dal sistema.
+    </p>
+
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Annulla</button>
+  <button
+    mat-raised-button
+    color="primary"
+    [disabled]="form.invalid"
+    (click)="confirm()"
+  >
+    Aggiungi
+  </button>
+</mat-dialog-actions>
