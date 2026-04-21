@@ -142,13 +142,15 @@ public class ScenarioServiceImpl implements ScenarioService {
 
         double costo = costoTotale(transazioni);
 
+        double budget = scenario.getBudgetIniziale();
+
         return ProiezioneScenario.builder()
                 .dataInizioSimulazione(dataInizio)
                 .costoTotale(costo)
-                .odierno(calcolaPunto(transazioni, LocalDate.now(), costo))
-                .seiMesi(calcolaPunto(transazioni, dataInizio.plusMonths(6), costo))
-                .unAnno(calcolaPunto(transazioni, dataInizio.plusYears(1), costo))
-                .cinqueAnni(calcolaPunto(transazioni, dataInizio.plusYears(5), costo))
+                .odierno(calcolaPunto(transazioni, LocalDate.now(), costo, budget))
+                .seiMesi(calcolaPunto(transazioni, dataInizio.plusMonths(6), costo, budget))
+                .unAnno(calcolaPunto(transazioni, dataInizio.plusYears(1), costo, budget))
+                .cinqueAnni(calcolaPunto(transazioni, dataInizio.plusYears(5), costo, budget))
                 .build();
     }
 
@@ -163,7 +165,7 @@ public class ScenarioServiceImpl implements ScenarioService {
     }
 
     private ProiezioneScenario.Punto calcolaPunto(
-            List<TransazioneScenario> transazioni, LocalDate data, double costoTotale) {
+            List<TransazioneScenario> transazioni, LocalDate data, double costoTotale, double budgetIniziale) {
 
         LocalDate oggi = LocalDate.now();
         boolean stimato = data.isAfter(oggi);
@@ -191,7 +193,7 @@ public class ScenarioServiceImpl implements ScenarioService {
         }
 
         double pnl = valore - costoTotale;
-        double pnlPerc = costoTotale > 0 ? (pnl / costoTotale) * 100 : 0;
+        double pnlPerc = budgetIniziale > 0 ? (pnl / budgetIniziale) * 100 : 0;
 
         return ProiezioneScenario.Punto.builder()
                 .data(data)

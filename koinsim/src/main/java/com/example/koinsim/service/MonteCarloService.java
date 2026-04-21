@@ -113,14 +113,16 @@ public class MonteCarloService {
         double[] valoriCinqueAnni = simulaPortafoglio(
                 transazioni, muPerSimbolo, sigmaPerSimbolo, prezziCorrenti, GIORNI_CINQUE_ANNI);
 
+        double budgetIniziale = scenario.getBudgetIniziale();
+
         return ProiezioneMonteCarlo.builder()
                 .scenarioId(scenarioId)
                 .dataSimulazione(LocalDate.now())
                 .costoTotale(costoTotale)
                 .nSimulazioni(N_SIMULAZIONI)
-                .seiMesi(calcolaRisultato(valoriSeiMesi, GIORNI_SEI_MESI, "6 mesi", valoreCorrente, costoTotale))
-                .unAnno(calcolaRisultato(valoriUnAnno, GIORNI_UN_ANNO, "1 anno", valoreCorrente, costoTotale))
-                .cinqueAnni(calcolaRisultato(valoriCinqueAnni, GIORNI_CINQUE_ANNI, "5 anni", valoreCorrente, costoTotale))
+                .seiMesi(calcolaRisultato(valoriSeiMesi, GIORNI_SEI_MESI, "6 mesi", valoreCorrente, costoTotale, budgetIniziale))
+                .unAnno(calcolaRisultato(valoriUnAnno, GIORNI_UN_ANNO, "1 anno", valoreCorrente, costoTotale, budgetIniziale))
+                .cinqueAnni(calcolaRisultato(valoriCinqueAnni, GIORNI_CINQUE_ANNI, "5 anni", valoreCorrente, costoTotale, budgetIniziale))
                 .build();
     }
 
@@ -214,12 +216,12 @@ public class MonteCarloService {
      */
     public RisultatoMonteCarlo calcolaRisultato(double[] valoriFinali, int orizzonteGiorni,
                                                  String etichetta, double valoreCorrente,
-                                                 double costoTotale) {
+                                                 double costoTotale, double budgetIniziale) {
         double p10 = calcolaPercentile(valoriFinali, 0.10);
         double p50 = calcolaPercentile(valoriFinali, 0.50);
         double p90 = calcolaPercentile(valoriFinali, 0.90);
         double pnlMediano = p50 - costoTotale;
-        double pnlMedianoPerc = costoTotale != 0.0 ? pnlMediano / costoTotale * 100.0 : 0.0;
+        double pnlMedianoPerc = budgetIniziale != 0.0 ? pnlMediano / budgetIniziale * 100.0 : 0.0;
 
         return RisultatoMonteCarlo.builder()
                 .orizzonteGiorni(orizzonteGiorni)

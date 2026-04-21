@@ -103,24 +103,27 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
     return Math.max(0, (this.scenario!.budgetRimanente / totalBudget) * 100);
   }
 
+  selectedPercentile: 10 | 50 | 90 = 50;
+
   get montecarloSummary(): { label: string; pnl: number; pnlPerc: number }[] {
-    if (!this.montecarlo) return [];
+    if (!this.montecarlo || !this.scenario) return [];
+
+    const mc = this.montecarlo;
+    const costoTotale = mc.costoTotale;
+    const budget = this.scenario.budgetIniziale;
+    const p = this.selectedPercentile;
+
+    const calc = (r: { percentile10: number; percentile90: number; pnlMediano: number }) => {
+      const pnl = p === 10 ? r.percentile10 - costoTotale
+                : p === 90 ? r.percentile90 - costoTotale
+                : r.pnlMediano;
+      return { pnl, pnlPerc: budget > 0 ? (pnl / budget) * 100 : 0 };
+    };
+
     return [
-      {
-        label: '6 Mesi (mediano)',
-        pnl: this.montecarlo.seiMesi.pnlMediano,
-        pnlPerc: this.montecarlo.seiMesi.pnlMedianoPerc,
-      },
-      {
-        label: '1 Anno (mediano)',
-        pnl: this.montecarlo.unAnno.pnlMediano,
-        pnlPerc: this.montecarlo.unAnno.pnlMedianoPerc,
-      },
-      {
-        label: '5 Anni (mediano)',
-        pnl: this.montecarlo.cinqueAnni.pnlMediano,
-        pnlPerc: this.montecarlo.cinqueAnni.pnlMedianoPerc,
-      },
+      { label: '6 Mesi', ...calc(mc.seiMesi) },
+      { label: '1 Anno', ...calc(mc.unAnno) },
+      { label: '5 Anni', ...calc(mc.cinqueAnni) },
     ];
   }
 
@@ -203,8 +206,12 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
   // ── Transazioni ──────────────────────────────────────────────────────────
 
   openAddTransaction(): void {
+    if ((this.scenario?.budgetRimanente ?? 0) <= 0) {
+      this.snack.open('Budget esaurito: non puoi aggiungere ulteriori transazioni.', 'Chiudi', { duration: 4000 });
+      return;
+    }
     this.dialog
-      .open(AddTransactionDialogComponent, { 
+      .open(AddTransactionDialogComponent, {
         width: '460px',
         data: {
           budgetIniziale: this.scenario?.budgetIniziale ?? 0,
