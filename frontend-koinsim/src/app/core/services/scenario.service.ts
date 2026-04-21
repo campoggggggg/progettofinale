@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 import {
   ScenarioRequest,
   ScenarioResponse,
-  TransazioneRequest,
+  TransazioneCreateRequest,
   ProiezioneScenario,
   ProiezioneMonteCarlo,
 } from '../models/models';
@@ -37,10 +37,10 @@ export class ScenarioService {
       .pipe(map(() => void 0));
   }
 
-  aggiungiTransazione(id: number, req: TransazioneRequest): Observable<void> {
-    // 201 Created con body vuoto: responseType 'text' evita errori di parsing JSON
+  aggiungiTransazione(id: number, req: TransazioneCreateRequest): Observable<void> {
+    // 201 Created: il backend può restituire body vuoto o JSON di errore
     return this.http
-      .post(`${this.BASE}/${id}/transazioni`, req, { responseType: 'text' as const })
+      .post(`${this.BASE}/${id}/transazioni`, req)
       .pipe(map(() => void 0));
   }
 
@@ -58,8 +58,6 @@ export class ScenarioService {
   }
 
   montecarlo(id: number): Observable<ProiezioneMonteCarlo> {
-    return this.http.get<ProiezioneMonteCarlo>(
-      `${this.BASE}/${id}/montecarlo`
-    );
+    return this.http.get<ProiezioneMonteCarlo>(`${this.BASE}/${id}/montecarlo`);
   }
 }
