@@ -1,7 +1,7 @@
 # KoinSim — Documentazione Tecnica
 
 **Simulatore di portafoglio finanziario** per azioni e criptovalute, con proiezioni a 6m, 1a e 5a con una simulazione Monte Carlo.
-
+asd
 ---
 
 ## Indice
