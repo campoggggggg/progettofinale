@@ -15,7 +15,7 @@
 @if (loading) {
   <div class="center-spinner">
     <mat-spinner />
-    <p style="margin-top:16px;color:#666">Caricamento dati...</p>
+    <p style="margin-top:16px;color:#5C5F7A">Caricamento dati...</p>
   </div>
 }
 
@@ -93,16 +93,16 @@
               <div
                 class="segment"
                 [style.width.%]="allocationRimanente"
-                style="background:#e0e0e0;color:#888"
+                style="background:#A0A3BD;color:#fff"
               >
                 {{ allocationRimanente | number:'1.1-1' }}%
               </div>
             }
           </div>
           <div class="allocation-labels">
-            <span><span class="legend-dot" style="background:#3f51b5"></span>Azioni</span>
-            <span><span class="legend-dot" style="background:#ffa726"></span>Crypto</span>
-            <span><span class="legend-dot" style="background:#e0e0e0"></span>Liquidità</span>
+            <span><span class="legend-dot" style="background:#111439"></span>Azioni</span>
+            <span><span class="legend-dot" style="background:#F5B041"></span>Crypto</span>
+            <span><span class="legend-dot" style="background:#A0A3BD"></span>Liquidità</span>
           </div>
         }
       </mat-card-content>
@@ -135,7 +135,7 @@
           }
 
           @if (scenario.transazioni.length === 0) {
-            <p style="color:#999;text-align:center;padding:16px">
+            <p style="color:#A0A3BD;text-align:center;padding:16px">
               Nessuna transazione. Inizia aggiungendone una.
             </p>
           } @else {
@@ -230,11 +230,11 @@
         <mat-card-title>P&amp;L (€) — Simulazione Monte Carlo</mat-card-title>
         <span class="spacer"></span>
         <div class="pnl-legend">
-          <span class="legend-dot" style="background:#2196F3"></span>
+          <span class="legend-dot" style="background:#E74C3C"></span>
           <span>10° Percentile</span>
-          <span class="legend-dot" style="background:#F44336;margin-left:12px"></span>
+          <span class="legend-dot" style="background:#3498DB;margin-left:12px"></span>
           <span>50° Percentile</span>
-          <span class="legend-dot" style="background:#4CAF50;margin-left:12px"></span>
+          <span class="legend-dot" style="background:#2ECC71;margin-left:12px"></span>
           <span>90° Percentile</span>
         </div>
       </mat-card-header>
@@ -243,7 +243,7 @@
         @if (loadingMonteCarlo) {
           <div class="center-spinner-small" style="height:200px">
             <mat-spinner diameter="40" />
-            <p style="margin-top:8px;color:#666">Simulazione Monte Carlo in corso...</p>
+            <p style="margin-top:8px;color:#5C5F7A">Simulazione Monte Carlo in corso...</p>
           </div>
         } @else if (!montecarlo) {
           <p class="empty-chart">

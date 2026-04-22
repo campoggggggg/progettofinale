@@ -1,42 +1,142 @@
 @use '@angular/material' as mat;
 
+/* ── Design Tokens ─────────────────────────────────────────────── */
+:root {
+  --c-primary:        #111439;
+  --c-primary-hover:  #1C1F5A;
+  --c-bg:             #F8F8F9;
+  --c-card:           #FFFFFF;
+  --c-surface-soft:   #F1F2F6;
+
+  --c-lilla-50:       #F4F3FA;
+  --c-lilla-100:      #E6E4F5;
+  --c-lilla-300:      #C9C5EB;
+  --c-lilla-500:      #A9A3E0;
+
+  --c-success:        #2ECC71;
+  --c-danger:         #E74C3C;
+  --c-warning:        #F5B041;
+  --c-info:           #3498DB;
+
+  --c-text:           #0B0D26;
+  --c-text-2:         #5C5F7A;
+  --c-text-3:         #A0A3BD;
+}
+
+/* ── Base ───────────────────────────────────────────────────────── */
 html, body {
   height: 100%;
   margin: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
-  background-color: #f0f2f5;
+  background-color: var(--c-bg);
+  color: var(--c-text);
 }
 
-/* Utility */
+/* ── Material overrides ─────────────────────────────────────────── */
+
+/* Toolbar */
+.mat-toolbar.mat-primary {
+  --mat-toolbar-container-background-color: var(--c-primary);
+  background-color: var(--c-primary) !important;
+  color: #ffffff !important;
+}
+
+/* Raised / unelevated primary buttons */
+button.mat-mdc-raised-button.mat-primary,
+button.mat-mdc-unelevated-button.mat-primary {
+  --mdc-protected-button-container-color: var(--c-primary);
+  --mdc-filled-button-container-color: var(--c-primary);
+  --mdc-protected-button-label-text-color: #fff;
+  --mdc-filled-button-label-text-color: #fff;
+  background-color: var(--c-primary) !important;
+  color: #fff !important;
+}
+
+button.mat-mdc-raised-button.mat-primary:hover:not(:disabled),
+button.mat-mdc-unelevated-button.mat-primary:hover:not(:disabled) {
+  background-color: var(--c-primary-hover) !important;
+}
+
+/* Outlined/stroked primary button */
+button.mat-mdc-outlined-button[color="primary"] {
+  --mdc-outlined-button-label-text-color: var(--c-primary);
+  --mdc-outlined-button-outline-color: var(--c-primary);
+  background-color: var(--c-lilla-50);
+}
+
+/* Progress spinner */
+.mat-mdc-progress-spinner {
+  --mdc-circular-progress-active-indicator-color: var(--c-primary);
+}
+
+/* Form field focus */
+.mat-mdc-form-field.mat-focused {
+  --mdc-outlined-text-field-caret-color: var(--c-primary);
+  --mdc-outlined-text-field-focus-outline-color: var(--c-primary);
+  --mdc-outlined-text-field-focus-label-text-color: var(--c-primary);
+  --mat-select-focused-arrow-color: var(--c-primary);
+}
+
+/* Tabs active */
+.mat-mdc-tab-group {
+  --mat-tab-header-active-label-text-color: var(--c-primary);
+  --mat-tab-header-active-indicator-color: var(--c-primary);
+}
+
+/* Cards */
+mat-card, .mat-mdc-card {
+  background-color: var(--c-card) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 1px 3px rgba(11, 13, 38, 0.06), 0 2px 8px rgba(11, 13, 38, 0.04) !important;
+}
+
+/* Card title: uppercase label style */
+.mat-mdc-card-title {
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 1.2px !important;
+  text-transform: uppercase !important;
+  color: var(--c-text-2) !important;
+}
+
+/* Table header cells */
+.mat-mdc-header-cell {
+  color: var(--c-text-2) !important;
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.8px !important;
+  text-transform: uppercase !important;
+}
+
+/* Table row hover */
+.mat-mdc-row:hover {
+  background-color: var(--c-lilla-50) !important;
+}
+
+/* ── Utility ────────────────────────────────────────────────────── */
 .spacer { flex: 1 1 auto; }
 
-/* Card griglia dashboard */
-.dashboard-grid {
-  display: grid;
-  gap: 16px;
-  padding: 16px;
-}
-
-/* Metriche top */
+/* ── Metric values ──────────────────────────────────────────────── */
 .metric-value {
   font-size: 2rem;
-  font-weight: 500;
-  color: #3f51b5;
+  font-weight: 600;
+  color: var(--c-primary);
+  line-height: 1.1;
 }
 
-.metric-value.speso  { color: #e53935; }
-.metric-value.rimanente { color: #43a047; }
+.metric-value.speso     { color: var(--c-danger); }
+.metric-value.rimanente { color: var(--c-success); }
 
-/* Chart container */
+/* ── Chart container ────────────────────────────────────────────── */
 .chart-container {
   position: relative;
   width: 100%;
 }
 
-/* Allocazione bar */
+/* ── Allocation bar ─────────────────────────────────────────────── */
 .allocation-bar {
-  height: 36px;
-  border-radius: 4px;
+  height: 32px;
+  border-radius: 6px;
   overflow: hidden;
   display: flex;
 
@@ -45,41 +145,52 @@ html, body {
     align-items: center;
     justify-content: center;
     color: #fff;
-    font-weight: 500;
-    font-size: 0.85rem;
+    font-weight: 600;
+    font-size: 0.8rem;
+    letter-spacing: 0.3px;
     transition: width 0.4s ease;
   }
 
-  .segment-stock  { background-color: #3f51b5; }
-  .segment-crypto { background-color: #ffa726; }
+  .segment-stock  { background-color: var(--c-primary); }
+  .segment-crypto { background-color: var(--c-warning); }
 }
 
-/* Osservazioni */
+/* ── Observations text ──────────────────────────────────────────── */
 .osservazioni-content {
   white-space: pre-wrap;
   font-size: 0.95rem;
   line-height: 1.6;
   min-height: 80px;
+  color: var(--c-text-2);
 }
 
-/* Chip asset */
-.chip-stock  { background: #e8eaf6 !important; color: #3f51b5 !important; }
-.chip-crypto { background: #fff3e0 !important; color: #e65100 !important; }
+/* ── Asset chips ────────────────────────────────────────────────── */
+.chip-stock {
+  background: var(--c-lilla-100) !important;
+  color: var(--c-primary) !important;
+  font-weight: 600 !important;
+  font-size: 0.72rem !important;
+}
 
-/* Scrollable table */
+.chip-crypto {
+  background: #FEF5E7 !important;
+  color: #9A6008 !important;
+  font-weight: 600 !important;
+  font-size: 0.72rem !important;
+}
+
+/* ── Scrollable table ───────────────────────────────────────────── */
 .table-wrapper {
   overflow-x: auto;
   max-height: 320px;
   overflow-y: auto;
 }
 
-/* Percentile legend */
+/* ── Legend dot ─────────────────────────────────────────────────── */
 .legend-dot {
   display: inline-block;
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   margin-right: 4px;
 }
-
-.mat-mdc-card-title { font-size: 1rem !important; font-weight: 500 !important; }

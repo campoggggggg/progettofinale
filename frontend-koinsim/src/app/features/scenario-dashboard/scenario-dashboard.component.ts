@@ -287,8 +287,8 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
     const data: number[] = [];
     const colors: string[] = [];
 
-    const stockPalette = ['#4CAF50', '#81C784', '#2E7D32', '#A5D6A7', '#388E3C', '#C8E6C9'];
-    const cryptoPalette = ['#FF9800', '#FFB74D', '#E65100', '#FFCC80', '#F57C00', '#FFE0B2'];
+    const stockPalette  = ['#111439', '#1C1F5A', '#2E3580', '#3D4899', '#5060B8', '#7080C8'];
+    const cryptoPalette = ['#A9A3E0', '#C9C5EB', '#7B74CC', '#8B84D4', '#6058B5', '#E6E4F5'];
     let si = 0, ci = 0;
 
     for (const t of tx) {
@@ -305,7 +305,7 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
       }
     }
 
-    if (liquidita > 0) { labels.push('Liquidità'); data.push(liquidita); colors.push('#2196F3'); }
+    if (liquidita > 0) { labels.push('Liquidità'); data.push(liquidita); colors.push('#3498DB'); }
 
     const chart = new Chart(this.distribuzioneChartRef.nativeElement, {
       type: 'doughnut',
@@ -362,8 +362,8 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
           {
             label: '10° Percentile',
             data: pnl10,
-            borderColor: '#2196F3',
-            backgroundColor: 'rgba(33,150,243,0.08)',
+            borderColor: '#E74C3C',
+            backgroundColor: 'rgba(231,76,60,0.07)',
             fill: false,
             tension: 0.4,
             pointRadius: 5,
@@ -372,8 +372,8 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
           {
             label: '50° Percentile',
             data: pnl50,
-            borderColor: '#F44336',
-            backgroundColor: 'rgba(244,67,54,0.08)',
+            borderColor: '#3498DB',
+            backgroundColor: 'rgba(52,152,219,0.07)',
             fill: false,
             tension: 0.4,
             pointRadius: 5,
@@ -382,8 +382,8 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
           {
             label: '90° Percentile',
             data: pnl90,
-            borderColor: '#4CAF50',
-            backgroundColor: 'rgba(76,175,80,0.08)',
+            borderColor: '#2ECC71',
+            backgroundColor: 'rgba(46,204,113,0.07)',
             fill: false,
             tension: 0.4,
             pointRadius: 5,

@@ -1,25 +1,28 @@
 .list-container {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 24px 16px;
+  padding: 28px 20px;
 }
 
 .list-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
 .list-header h2 {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #0B0D26;
+  letter-spacing: -0.3px;
 }
 
 .scenari-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
+  gap: 18px;
 }
 
 .scenario-card {
@@ -27,13 +30,13 @@
   transition: box-shadow 0.2s, transform 0.2s;
 
   &:hover {
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(17, 20, 57, 0.13) !important;
+    transform: translateY(-3px);
   }
 }
 
 .scenario-desc {
-  color: #666;
+  color: #5C5F7A;
   font-size: 0.9rem;
   margin: 8px 0;
   min-height: 20px;
@@ -41,32 +44,41 @@
 
 .scenario-budget {
   display: flex;
-  gap: 16px;
-  margin: 12px 0;
+  gap: 0;
+  margin: 14px 0;
+  padding: 12px 8px;
+  background: #F1F2F6;
+  border-radius: 8px;
 }
 
 .budget-item {
   display: flex;
   flex-direction: column;
   align-items: center;
+  flex: 1;
 }
 
 .budget-label {
-  font-size: 0.75rem;
-  color: #888;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #A0A3BD;
+  margin-bottom: 3px;
 }
 
 .budget-val {
-  font-weight: 500;
-  font-size: 1rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #0B0D26;
 }
 
 .budget-val.speso {
-  color: #e53935;
+  color: #E74C3C;
 }
 
 .budget-val.rimanente {
-  color: #43a047;
+  color: #2ECC71;
 }
 
 .center-spinner {
@@ -80,7 +92,7 @@
   flex-direction: column;
   align-items: center;
   padding: 64px;
-  color: #999;
+  color: #A0A3BD;
 }
 
 .empty-icon {
