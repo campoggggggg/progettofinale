@@ -3,24 +3,18 @@
 <mat-dialog-content>
   <form [formGroup]="form" class="dialog-form">
 
-    <!-- Tipo asset -->
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Tipo asset</mat-label>
-      <mat-select formControlName="tipoAsset">
-        <mat-option value="STOCK">STOCK</mat-option>
-        <mat-option value="CRYPTO">CRYPTO</mat-option>
-      </mat-select>
-      <mat-error *ngIf="form.get('tipoAsset')?.hasError('required')">
-        Campo obbligatorio
-      </mat-error>
-    </mat-form-field>
-
-    <!-- Simbolo -->
+    <!-- Simbolo con tipo derivato -->
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Simbolo</mat-label>
-      <input matInput formControlName="simbolo" [placeholder]="simboloHint" />
-      <mat-hint>{{ simboloHint }}</mat-hint>
-      <mat-error *ngIf="form.get('simbolo')?.hasError('required')">
+      <mat-select formControlName="simboloSelezionato">
+        <mat-option *ngFor="let s of simboliDisponibili" [value]="s">
+          {{ s.simbolo }} <span class="tipo-badge">{{ s.tipoAsset }}</span>
+        </mat-option>
+      </mat-select>
+      <mat-hint *ngIf="form.get('simboloSelezionato')?.value as sel">
+        Tipo: {{ sel.tipoAsset }}
+      </mat-hint>
+      <mat-error *ngIf="form.get('simboloSelezionato')?.hasError('required')">
         Campo obbligatorio
       </mat-error>
     </mat-form-field>
