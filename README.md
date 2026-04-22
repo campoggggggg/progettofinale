@@ -322,10 +322,10 @@ POST   /api/market-data/fetch           Scarica dati da Alpha Vantage / CoinGeck
 
 ## Autori
 
-| | Nome | GitHub | LinkedIn |
+| Nome | GitHub | LinkedIn |
 |---|---|---|---|
-| 👩‍💻 | **Maria** | [![GitHub](https://img.shields.io/badge/GitHub-your--username-181717?style=flat&logo=github)](https://github.com/your-username) | [![LinkedIn](https://img.shields.io/badge/LinkedIn-Miriam_Baylon-0A66C2?style=flat&logo=linkedin)](https://linkedin.com/in/your-profile) |
-| 👨‍💻 | **Gabriele** | [![GitHub](https://img.shields.io/badge/GitHub-your--username-181717?style=flat&logo=github)](https://github.com/your-username) | [![LinkedIn](https://img.shields.io/badge/LinkedIn-Gabriele-0A66C2?style=flat&logo=linkedin)](https://linkedin.com/in/your-profile) |
+| **Maria** | [![GitHub](https://img.shields.io/badge/GitHub-your--username-181717?style=flat&logo=github)](https://github.com/bayloncina) | [![LinkedIn](https://img.shields.io/badge/LinkedIn-Maria_Baylon-0A66C2?style=flat&logo=linkedin)](https://www.linkedin.com/in/maria-baylon/) |
+| **Gabriele** | [![GitHub](https://img.shields.io/badge/GitHub-your--username-181717?style=flat&logo=github)](https://github.com/your-username) | [![LinkedIn](https://img.shields.io/badge/LinkedIn-Gabriele-0A66C2?style=flat&logo=linkedin)](https://linkedin.com/in/your-profile) |
 
 Sviluppato come progetto accademico · Stack completo full-stack con focus su finanza quantitativa e architetture moderne
 
