@@ -31,7 +31,7 @@ public class MarketDataController {
     @PostMapping("/fetch")
     public ResponseEntity<MarketDataResponse> fetch(@Valid @RequestBody MarketDataRequest request) {
         MarketDataResponse response = marketDataService.fetchAndPersistAll(
-                request.getSymbol(), request.getType());
+                request.getSymbol(), request.getType(), request.getStooqSymbol());
         return ResponseEntity.ok(response);
     }
 }

@@ -1,5 +1,5 @@
 package com.example.koinsim.model;
 
 public enum TipoAsset {
-    CRYPTO, STOCK
+    CRYPTO, STOCK, STOOQ
 }

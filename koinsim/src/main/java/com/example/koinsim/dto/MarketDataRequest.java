@@ -15,4 +15,6 @@ public class MarketDataRequest {
 
     @NotNull(message = "Il tipo asset è obbligatorio (CRYPTO o STOCK)")
     private TipoAsset type;
+
+    private String stooqSymbol;
 }

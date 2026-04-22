@@ -30,6 +30,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,9 +41,12 @@ public class MarketDataService {
 
     private static final String FONTE_ALPHA     = "ALPHA_VANTAGE";
     private static final String FONTE_COINGECKO = "COINGECKO";
+    private static final String FONTE_STOOQ     = "STOOQ";
     private static final String FETCH_PREFIX    = "mkt:fetched:";
     private static final String PARAMS_PREFIX   = "mkt:params:";
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ISO_LOCAL_DATE;
+
+    private static final int STOOQ_STALE_DAYS = 100;
 
     private final PrezzoStoricoRepository repository;
     private final WebClient webClient;
@@ -54,6 +58,9 @@ public class MarketDataService {
 
     @Value("${coingecko.api.key}")
     private String coinGeckoKey;
+
+    @Value("${stooq.api.key:}")
+    private String stooqKey;
 
     @Value("${market.data.csv.path:./data}")
     private String csvBasePath;
@@ -75,17 +82,10 @@ public class MarketDataService {
     // Public API
     // -------------------------------------------------------------------------
 
-    /**
-     * Singola chiamata per fonte: recupera tutti i dati storici disponibili,
-     * li persiste su MySQL + CSV, li indicizza su Redis, e restituisce mu/sigma
-     * pronti per la simulazione Monte Carlo.
-     * Se i dati sono già stati recuperati nelle ultime {@code redisTtlHours} ore,
-     * restituisce direttamente il risultato dalla cache senza toccare le API esterne.
-     */
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public MarketDataResponse fetchAndPersistAll(String symbol, TipoAsset type) {
-        String sym      = normalizeSymbol(symbol, type);
-        String fetchKey = FETCH_PREFIX + sym + ":" + type;
+    public MarketDataResponse fetchAndPersistAll(String symbol, TipoAsset type, String stooqSymbol) {
+        String sym       = normalizeSymbol(symbol, type);
+        String fetchKey  = FETCH_PREFIX + sym + ":" + type;
         String paramsKey = PARAMS_PREFIX + sym + ":" + type;
 
         // --- cache hit: zero API calls ---
@@ -102,38 +102,60 @@ public class MarketDataService {
             }
         }
 
-        // --- singola chiamata API per fonte ---
-        List<PrezzoStorico> nuovi = switch (type) {
-            case STOCK  -> fetchAlphaVantage(sym);
-            case CRYPTO -> fetchCoinGecko(sym);
-        };
-
-        if (nuovi.isEmpty()) {
-            throw new SymbolNotFoundException("Nessun dato restituito per: " + sym);
+        // --- Step 1: Stooq bulk storico (se fornito e dati scaduti o assenti) ---
+        if (stooqSymbol != null && !stooqSymbol.isBlank()) {
+            try {
+                LocalDate ultimaStooq = repository.findLastDate(sym, FONTE_STOOQ).orElse(null);
+                boolean scaduto = ultimaStooq == null ||
+                        ChronoUnit.DAYS.between(ultimaStooq, LocalDate.now()) > STOOQ_STALE_DAYS;
+                if (scaduto) {
+                    log.info("Fetch Stooq per {} (ultimaData={})", sym, ultimaStooq);
+                    List<PrezzoStorico> stooqData = fetchStooq(stooqSymbol, sym);
+                    persistiConFonte(sym, stooqData, FONTE_STOOQ, type);
+                } else {
+                    log.info("Stooq già aggiornato per {} (ultimaData={}), skip", sym, ultimaStooq);
+                }
+            } catch (Exception e) {
+                log.warn("Fetch Stooq fallito per {} (continuo con fonte primaria): {}", sym, e.getMessage());
+            }
         }
 
-        // --- persistenza: MySQL + CSV ---
-        persisti(sym, type, nuovi);
+        // --- Step 2: fonte primaria per le date più recenti (solo quelle mancanti) ---
+        List<PrezzoStorico> recenti = switch (type) {
+            case STOCK  -> fetchAlphaVantage(sym);
+            case CRYPTO -> fetchCoinGecko(sym);
+            case STOOQ  -> List.of();
+        };
 
-        // --- calcolo statistiche su tutti i record in DB (accumulo storico) ---
-        List<PrezzoStorico> tuttiDati =
-                repository.findBySimboloAndFonteOrderByDataAsc(sym, fonteFor(type));
+        if (!recenti.isEmpty()) {
+            Set<LocalDate> tutteLeDate = repository.findAllExistingDates(sym);
+            List<PrezzoStorico> nuoviRecenti = recenti.stream()
+                    .filter(p -> !tutteLeDate.contains(p.getData()))
+                    .collect(Collectors.toList());
+            if (!nuoviRecenti.isEmpty()) {
+                persistiConFonte(sym, nuoviRecenti, fonteFor(type), type);
+            }
+        }
 
-        MarketDataResponse response = calcolaStatistiche(sym, type, tuttiDati);
+        // --- Step 3: statistiche su tutti i dati combinati, deduplicati per data ---
+        List<PrezzoStorico> tuttiDati = repository.findBySimboloOrderByDataAsc(sym);
+        List<PrezzoStorico> datiUnici = deduplicaPerData(tuttiDati);
 
-        // --- cache risultato per le prossime 24h ---
+        if (datiUnici.isEmpty()) {
+            throw new SymbolNotFoundException("Nessun dato disponibile per: " + sym);
+        }
+
+        MarketDataResponse response = calcolaStatistiche(sym, type, datiUnici);
         cacheRisultato(fetchKey, paramsKey, response);
-
         return response;
     }
 
     // -------------------------------------------------------------------------
-    // Fetchers (una sola chiamata HTTP per fonte)
+    // Fetchers
     // -------------------------------------------------------------------------
 
     @SuppressWarnings("unchecked")
     private List<PrezzoStorico> fetchAlphaVantage(String symbol) {
-        // compact = ultimi ~100 giorni di borsa; outputsize=full per 20 anni (a pagamento)
         String url = "https://www.alphavantage.co/query"
                 + "?function=TIME_SERIES_DAILY"
                 + "&symbol=" + symbol
@@ -150,7 +172,6 @@ public class MarketDataService {
             throw new SymbolNotFoundException("Alpha Vantage non ha restituito dati per: " + symbol);
         }
 
-        // Rilevamento rate-limit: AV risponde con campo "Note" o "Information"
         if (body.containsKey("Note") || body.containsKey("Information")) {
             String msg = (String) body.getOrDefault("Note", body.get("Information"));
             throw new ApiLimitException("Limite giornaliero Alpha Vantage raggiunto: " + msg);
@@ -180,8 +201,6 @@ public class MarketDataService {
 
     @SuppressWarnings("unchecked")
     private List<PrezzoStorico> fetchCoinGecko(String symbol) {
-        // OHLC endpoint: 365 giorni → granularità giornaliera
-        // risposta: [[timestamp_ms, open, high, low, close], ...]
         String url = "https://api.coingecko.com/api/v3/coins/" + symbol
                 + "/ohlc?vs_currency=usd&days=365";
 
@@ -204,7 +223,6 @@ public class MarketDataService {
             throw new SymbolNotFoundException("Nessun dato OHLC CoinGecko per: " + symbol);
         }
 
-        // Deduplica per data (range brevi producono candele 4h → più candele/giorno)
         Map<LocalDate, PrezzoStorico> byDate = new LinkedHashMap<>();
         for (List<Object> candle : raw) {
             long tsMs      = ((Number) candle.get(0)).longValue();
@@ -222,16 +240,94 @@ public class MarketDataService {
         return new ArrayList<>(byDate.values());
     }
 
+    // urlSymbol = simbolo usato nell'URL Stooq (es. "aapl.us", "doge.v")
+    // dbSymbol  = simbolo con cui salvare i record in DB (es. "AAPL", "dogecoin")
+    private List<PrezzoStorico> fetchStooq(String urlSymbol, String dbSymbol) {
+        String d1  = LocalDate.now().minusYears(10).format(DateTimeFormatter.BASIC_ISO_DATE);
+        String d2  = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+        String url = "https://stooq.com/q/d/l/?s=" + urlSymbol.toLowerCase()
+                + "&d1=" + d1 + "&d2=" + d2 + "&i=d"
+                + (stooqKey != null && !stooqKey.isBlank() ? "&apikey=" + stooqKey : "");
+
+        String csv = webClient.get()
+                .uri(url)
+                .header("User-Agent",
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+                        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+                .retrieve()
+                .onStatus(s -> s.isError(), resp -> resp.bodyToMono(String.class)
+                        .map(b -> new RuntimeException("Stooq " + resp.statusCode() + ": " + b)))
+                .bodyToMono(String.class)
+                .block();
+
+        if (csv == null || csv.isBlank()) {
+            throw new SymbolNotFoundException("Stooq non ha restituito dati per: " + urlSymbol);
+        }
+
+        if (csv.trim().startsWith("<")) {
+            log.error("Stooq ha restituito HTML per {}: {}",
+                    urlSymbol, csv.substring(0, Math.min(200, csv.length())));
+            throw new SymbolNotFoundException("Stooq non ha restituito un CSV valido per: " + urlSymbol);
+        }
+
+        String[] lines = csv.split("\r?\n");
+        if (lines.length < 2) {
+            throw new SymbolNotFoundException("CSV Stooq vuoto per: " + urlSymbol);
+        }
+
+        log.info("Stooq CSV per {}: {} righe di dati", urlSymbol, lines.length - 1);
+
+        List<PrezzoStorico> result = new ArrayList<>();
+        for (int i = 1; i < lines.length; i++) {
+            String line = lines[i].trim();
+            if (line.isEmpty()) continue;
+            // formato: Date,Open,High,Low,Close,Volume
+            String[] cols = line.split(",");
+            if (cols.length < 5) {
+                log.warn("Riga Stooq con colonne insufficienti (ignorata): {}", line);
+                continue;
+            }
+            try {
+                LocalDate data  = LocalDate.parse(cols[0].trim());
+                Double    open  = parseStooqDouble(cols[1]);
+                Double    high  = parseStooqDouble(cols[2]);
+                Double    low   = parseStooqDouble(cols[3]);
+                Double    close = parseStooqDouble(cols[4]);
+                if (close == null) continue;
+                result.add(PrezzoStorico.builder()
+                        .simbolo(dbSymbol)
+                        .data(data)
+                        .open(open)
+                        .high(high)
+                        .low(low)
+                        .close(close)
+                        .fonte(FONTE_STOOQ)
+                        .build());
+            } catch (Exception e) {
+                log.warn("Riga Stooq non parsabile (ignorata): {} — {}", line, e.getMessage());
+            }
+        }
+
+        if (result.isEmpty()) {
+            throw new SymbolNotFoundException("Nessun dato valido nel CSV Stooq per: " + urlSymbol);
+        }
+        return result;
+    }
+
+    private Double parseStooqDouble(String s) {
+        if (s == null) return null;
+        String t = s.trim();
+        if (t.isEmpty() || t.equalsIgnoreCase("null")) return null;
+        return Double.parseDouble(t);
+    }
+
     // -------------------------------------------------------------------------
     // Persistenza
     // -------------------------------------------------------------------------
 
-    private void persisti(String symbol, TipoAsset type, List<PrezzoStorico> nuovi) {
-        String fonte = fonteFor(type);
-
-        // Legge le date già presenti in DB per evitare violazioni del vincolo univoco
+    private void persistiConFonte(String symbol, List<PrezzoStorico> nuovi,
+                                   String fonte, TipoAsset type) {
         Set<LocalDate> esistenti = repository.findExistingDates(symbol, fonte);
-
         List<PrezzoStorico> daSalvare = nuovi.stream()
                 .filter(p -> !esistenti.contains(p.getData()))
                 .toList();
@@ -240,7 +336,7 @@ public class MarketDataService {
             try {
                 repository.saveAll(daSalvare);
             } catch (DataIntegrityViolationException e) {
-                log.warn("Dati già presenti per {} (constraint violation ignorata)", symbol);
+                log.warn("Dati già presenti per {} fonte {} (constraint violation ignorata)", symbol, fonte);
             } catch (Exception e) {
                 log.warn("Salvataggio fallito per {}: {} — continuo con i dati già in DB", symbol, e.getMessage());
             }
@@ -282,6 +378,20 @@ public class MarketDataService {
     }
 
     // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+
+    private List<PrezzoStorico> deduplicaPerData(List<PrezzoStorico> dati) {
+        // Dati già ordinati per data ASC; teniamo il primo record per ogni data
+        // (Stooq arriva prima → ha precedenza per le date storiche)
+        Map<LocalDate, PrezzoStorico> byDate = new LinkedHashMap<>();
+        for (PrezzoStorico p : dati) {
+            byDate.putIfAbsent(p.getData(), p);
+        }
+        return new ArrayList<>(byDate.values());
+    }
+
+    // -------------------------------------------------------------------------
     // Statistiche: mu e sigma per Monte Carlo
     // -------------------------------------------------------------------------
 
@@ -292,13 +402,11 @@ public class MarketDataService {
                     "Dati insufficienti per calcolare mu/sigma (min 2 prezzi): " + symbol);
         }
 
-        // Log-return giornaliero: r_t = ln(P_t / P_{t-1})
         double[] logReturns = new double[dati.size() - 1];
         for (int i = 1; i < dati.size(); i++) {
             logReturns[i - 1] = Math.log(dati.get(i).getClose() / dati.get(i - 1).getClose());
         }
 
-        // DescriptiveStatistics usa deviazione standard campionaria (denominatore N-1)
         DescriptiveStatistics stats = new DescriptiveStatistics(logReturns);
 
         return MarketDataResponse.builder()
@@ -328,16 +436,16 @@ public class MarketDataService {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
-
     private String normalizeSymbol(String symbol, TipoAsset type) {
-        return type == TipoAsset.STOCK ? symbol.toUpperCase() : symbol.toLowerCase();
+        return type == TipoAsset.CRYPTO ? symbol.toLowerCase() : symbol.toUpperCase();
     }
 
     private String fonteFor(TipoAsset type) {
-        return type == TipoAsset.STOCK ? FONTE_ALPHA : FONTE_COINGECKO;
+        return switch (type) {
+            case STOCK  -> FONTE_ALPHA;
+            case CRYPTO -> FONTE_COINGECKO;
+            case STOOQ  -> FONTE_STOOQ;
+        };
     }
 
     private String fmtDouble(Double value) {
