@@ -40,7 +40,6 @@ import { AddTransactionDialogComponent } from '../dialogs/add-transaction-dialog
   imports: [
     CommonModule,
     CurrencyPipe,
-    PercentPipe,
     MatToolbarModule,
     MatCardModule,
     MatButtonModule,
@@ -110,6 +109,7 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
     if (!this.montecarlo || !this.scenario) return [];
 
     const mc = this.montecarlo;
+// sourcery skip: use-object-destructuring
     const costoTotale = mc.costoTotale;
     const budget = this.scenario.budgetIniziale;
     const p = this.selectedPercentile;
