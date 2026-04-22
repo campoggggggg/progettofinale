@@ -338,8 +338,9 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
   }
 
   /**
-   * Grafico P&L Monte Carlo con 3 linee percentili (10°/50°/90°) e fan di simulazioni in grigio.
-   * X: [Oggi, 6 Mesi, 1 Anno, 5 Anni]
+   * Grafico P&L Monte Carlo con 3 linee percentili (10°/50°/90°) calcolate empiricamente
+   * da tutti i 61 mesi dei path, e fan di simulazioni in grigio.
+   * X: 61 label mensili (visibili solo a Oggi / 6 Mesi / 1 Anno / 5 Anni)
    * Y: P&L in $ rispetto al costo totale
    */
   private drawPnlChart(): void {
@@ -347,18 +348,37 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
     const existing = this.charts.find(c => c.canvas === this.pnlChartRef.nativeElement);
     if (existing) existing.destroy();
 
-    const mc = this.montecarlo;
-    const oggi = mc.seiMesi.valoreCorrente - mc.costoTotale;
-    const costo = mc.costoTotale;
-
-    const pnl10 = [oggi, mc.seiMesi.percentile10 - costo, mc.unAnno.percentile10 - costo, mc.cinqueAnni.percentile10 - costo];
-    const pnl50 = [oggi, mc.seiMesi.pnlMediano, mc.unAnno.pnlMediano, mc.cinqueAnni.pnlMediano];
-    const pnl90 = [oggi, mc.seiMesi.percentile90 - costo, mc.unAnno.percentile90 - costo, mc.cinqueAnni.percentile90 - costo];
-
     const paths = this.simulationPaths;
+    if (!paths.length) return;
 
-    // Milestones (mesi) → indice categorico X: 0=oggi, 6=6mesi, 12=1anno, 60=5anni
-    const milestonesMonths = [0, 6, 12, 60];
+    const totalMonths = 60;
+    const milestoneSet = new Set([0, 6, 12, 60]);
+
+    // Percentili empirici a ogni mese dai path simulati
+    const p10Line: number[] = [];
+    const p50Line: number[] = [];
+    const p90Line: number[] = [];
+
+    for (let m = 0; m <= totalMonths; m++) {
+      const vals = paths.map(p => p[m]).sort((a, b) => a - b);
+      const n = vals.length;
+      p10Line.push(vals[Math.floor(0.10 * n)] ?? 0);
+      p50Line.push(vals[Math.floor(0.50 * n)] ?? 0);
+      p90Line.push(vals[Math.floor(0.90 * n)] ?? 0);
+    }
+
+    // Asse X: 61 label mensili, testo visibile solo ai 4 milestone
+    const xLabels = Array.from({ length: totalMonths + 1 }, (_, m) => {
+      if (m === 0) return 'Oggi';
+      if (m === 6) return '6 Mesi';
+      if (m === 12) return '1 Anno';
+      if (m === 60) return '5 Anni';
+      return '';
+    });
+
+    // Raggio dei punti: visibile solo ai milestone
+    const pointRadii = xLabels.map((_, i) => milestoneSet.has(i) ? 5 : 0);
+    const pointHoverRadii = xLabels.map((_, i) => milestoneSet.has(i) ? 8 : 0);
 
     const simulationFanPlugin = {
       id: 'simulationFan',
@@ -367,20 +387,6 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
         const xScale = chart.scales['x'];
         const yScale = chart.scales['y'];
         const area = chart.chartArea;
-
-        const catPixels: number[] = [0, 1, 2, 3].map((i: number) => xScale.getPixelForValue(i));
-
-        const monthToPixel = (m: number): number => {
-          if (m <= 0) return catPixels[0];
-          if (m >= 60) return catPixels[3];
-          for (let s = 0; s < 3; s++) {
-            if (m >= milestonesMonths[s] && m <= milestonesMonths[s + 1]) {
-              const t = (m - milestonesMonths[s]) / (milestonesMonths[s + 1] - milestonesMonths[s]);
-              return catPixels[s] + t * (catPixels[s + 1] - catPixels[s]);
-            }
-          }
-          return catPixels[3];
-        };
 
         ctx2.save();
         ctx2.beginPath();
@@ -393,7 +399,7 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
         for (const path of paths) {
           ctx2.beginPath();
           path.forEach((val, m) => {
-            const x = monthToPixel(m);
+            const x = xScale.getPixelForValue(m);
             const y = yScale.getPixelForValue(val);
             if (m === 0) ctx2.moveTo(x, y);
             else ctx2.lineTo(x, y);
@@ -408,37 +414,37 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
     const chart = new Chart(this.pnlChartRef.nativeElement, {
       type: 'line',
       data: {
-        labels: ['Oggi', '6 Mesi', '1 Anno', '5 Anni'],
+        labels: xLabels,
         datasets: [
           {
             label: '10° Percentile',
-            data: pnl10,
+            data: p10Line,
             borderColor: '#E74C3C',
             backgroundColor: 'rgba(231,76,60,0.07)',
             fill: false,
             tension: 0,
-            pointRadius: 5,
-            pointHoverRadius: 8,
+            pointRadius: pointRadii,
+            pointHoverRadius: pointHoverRadii,
           },
           {
             label: '50° Percentile',
-            data: pnl50,
+            data: p50Line,
             borderColor: '#3498DB',
             backgroundColor: 'rgba(52,152,219,0.07)',
             fill: false,
             tension: 0,
-            pointRadius: 5,
-            pointHoverRadius: 8,
+            pointRadius: pointRadii,
+            pointHoverRadius: pointHoverRadii,
           },
           {
             label: '90° Percentile',
-            data: pnl90,
+            data: p90Line,
             borderColor: '#2ECC71',
             backgroundColor: 'rgba(46,204,113,0.07)',
             fill: false,
             tension: 0,
-            pointRadius: 5,
-            pointHoverRadius: 8,
+            pointRadius: pointRadii,
+            pointHoverRadius: pointHoverRadii,
           },
         ],
       },
@@ -450,6 +456,7 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
         plugins: {
           legend: { display: false },
           tooltip: {
+            filter: (item: any) => milestoneSet.has(item.dataIndex),
             callbacks: {
               label: ctx => {
                 const n = ctx.parsed.y as number;
@@ -460,6 +467,16 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
           },
         },
         scales: {
+          x: {
+            ticks: {
+              autoSkip: false,
+              maxRotation: 0,
+              callback: (_val: any, index: number) => xLabels[index],
+            },
+            grid: {
+              color: (ctx: any) => milestoneSet.has(ctx.index) ? 'rgba(0,0,0,0.08)' : 'transparent',
+            },
+          },
           y: {
             title: { display: true, text: 'P&L ($)' },
             ticks: {
