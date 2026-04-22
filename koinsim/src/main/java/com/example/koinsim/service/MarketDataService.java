@@ -101,11 +101,29 @@ public class MarketDataService {
     // -------------------------------------------------------------------------
 
     public List<SimboloDisponibileResponse> getSimboliDisponibili() {
-        return repository.findDistinctSimboliConFonte().stream()
-                .map(row -> {
-                    String simbolo = (String) row[0];
-                    String fonte   = (String) row[1];
-                    TipoAsset tipo = FONTE_COINGECKO.equals(fonte) ? TipoAsset.CRYPTO : TipoAsset.STOCK;
+        // Deduplica per simbolo: se ha più fonti, priorità a COINGECKO
+        Map<String, String> migliore = new LinkedHashMap<>();
+        for (Object[] row : repository.findDistinctSimboliConFonte()) {
+            String sim   = (String) row[0];
+            String fonte = (String) row[1];
+            migliore.merge(sim, fonte, (existing, nuovo) ->
+                    FONTE_COINGECKO.equals(nuovo) ? nuovo : existing);
+        }
+
+        return migliore.entrySet().stream()
+                .map(e -> {
+                    String simbolo = e.getKey();
+                    String fonte   = e.getValue();
+                    TipoAsset tipo;
+                    if (FONTE_COINGECKO.equals(fonte)) {
+                        tipo = TipoAsset.CRYPTO;
+                    } else if (FONTE_ALPHA.equals(fonte)) {
+                        tipo = TipoAsset.STOCK;
+                    } else {
+                        // STOOQ copre sia stock sia crypto: determina dal mapping noto
+                        tipo = CRYPTO_STOOQ.containsKey(simbolo.toLowerCase())
+                                ? TipoAsset.CRYPTO : TipoAsset.STOCK;
+                    }
                     return new SimboloDisponibileResponse(simbolo, tipo);
                 })
                 .collect(Collectors.toList());
