@@ -2,10 +2,13 @@ package com.example.koinsim.controller;
 
 import com.example.koinsim.dto.MarketDataRequest;
 import com.example.koinsim.dto.MarketDataResponse;
+import com.example.koinsim.dto.SimboloDisponibileResponse;
 import com.example.koinsim.service.MarketDataService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/market-data")
@@ -33,5 +36,10 @@ public class MarketDataController {
         MarketDataResponse response = marketDataService.fetchAndPersistAll(
                 request.getSymbol(), request.getType(), request.getStooqSymbol());
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/simboli")
+    public ResponseEntity<List<SimboloDisponibileResponse>> getSimboli() {
+        return ResponseEntity.ok(marketDataService.getSimboliDisponibili());
     }
 }

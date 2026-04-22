@@ -24,4 +24,7 @@ public interface PrezzoStoricoRepository extends JpaRepository<PrezzoStorico, Lo
 
     @Query("SELECT MAX(p.data) FROM PrezzoStorico p WHERE p.simbolo = :simbolo AND p.fonte = :fonte")
     Optional<LocalDate> findLastDate(@Param("simbolo") String simbolo, @Param("fonte") String fonte);
+
+    @Query("SELECT DISTINCT p.simbolo, p.fonte FROM PrezzoStorico p")
+    List<Object[]> findDistinctSimboliConFonte();
 }

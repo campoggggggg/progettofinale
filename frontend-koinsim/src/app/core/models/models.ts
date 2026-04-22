@@ -94,6 +94,13 @@ export interface ProiezioneMonteCarlo {
   cinqueAnni: RisultatoMonteCarlo;
 }
 
+// ─── Simboli disponibili ─────────────────────────────────────────────────────
+
+export interface SimboloDisponibile {
+  simbolo: string;
+  tipoAsset: TipoAsset;
+}
+
 // ─── Market Data ─────────────────────────────────────────────────────────────
 
 export interface MarketDataRequest {

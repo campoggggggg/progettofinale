@@ -1,6 +1,7 @@
 package com.example.koinsim.service;
 
 import com.example.koinsim.dto.MarketDataResponse;
+import com.example.koinsim.dto.SimboloDisponibileResponse;
 import com.example.koinsim.exception.ApiLimitException;
 import com.example.koinsim.exception.DataPersistenceException;
 import com.example.koinsim.exception.SymbolNotFoundException;
@@ -98,6 +99,17 @@ public class MarketDataService {
     // -------------------------------------------------------------------------
     // Public API
     // -------------------------------------------------------------------------
+
+    public List<SimboloDisponibileResponse> getSimboliDisponibili() {
+        return repository.findDistinctSimboliConFonte().stream()
+                .map(row -> {
+                    String simbolo = (String) row[0];
+                    String fonte   = (String) row[1];
+                    TipoAsset tipo = FONTE_COINGECKO.equals(fonte) ? TipoAsset.CRYPTO : TipoAsset.STOCK;
+                    return new SimboloDisponibileResponse(simbolo, tipo);
+                })
+                .collect(Collectors.toList());
+    }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public MarketDataResponse fetchAndPersistAll(String symbol, TipoAsset type, String stooqSymbol) {
