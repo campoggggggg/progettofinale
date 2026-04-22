@@ -271,14 +271,11 @@ Tutti i container comunicano sulla rete bridge `koinsim_net`. Le credenziali e l
 
 Il cuore analitico di KoinSim è il modello **Geometric Brownian Motion**:
 
-```
 $$
-S(t) = S(t-1) × exp( (μ - σ²/2)·Δt + σ·√Δt·Z )
+S_{t} = S_{t-1} \exp\left( (\mu - \frac{\sigma^2}{2}) \Delta t + \sigma \epsilon \sqrt{\Delta t} \right)
 $$
 
-```
-
-dove $Z ~ N(0,1)$ è una variabile casuale normale standard.
+dove $\epsilon \sim \mathcal{N}(0,1)$ è una variabile casuale normale standard.
 
 **Processo:**
 1. Calcolo di μ e σ dai rendimenti logaritmici storici di ogni asset
