@@ -47,17 +47,27 @@ public class PrezzoService {
         String url = "https://api.coingecko.com/api/v3/simple/price"
                 + "?ids=" + simbolo + "&vs_currencies=usd";
 
-        return webClient.get().uri(url)
-                .header("x-cg-demo-api-key", coingeckoApiKey)
-                .retrieve()
-                .bodyToMono(Map.class)
-                .map(corpo -> {
-                    Map<String, Object> voce = (Map<String, Object>) corpo.get(simbolo);
-                    if (voce == null || voce.get("usd") == null) {
-                        throw new RuntimeException("Prezzo non disponibile per: " + simbolo);
-                    }
-                    return ((Number) voce.get("usd")).doubleValue();
-                }).block();
+        try {
+            return webClient.get().uri(url)
+                    .header("x-cg-demo-api-key", coingeckoApiKey)
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .map(corpo -> {
+                        Map<String, Object> voce = (Map<String, Object>) corpo.get(simbolo);
+                        if (voce == null || voce.get("usd") == null) {
+                            throw new RuntimeException("Prezzo non disponibile per: " + simbolo);
+                        }
+                        return ((Number) voce.get("usd")).doubleValue();
+                    }).block();
+        } catch (RuntimeException e) {
+            log.warn("CoinGecko non disponibile per {}, uso ultimo prezzo dal DB: {}", simbolo, e.getMessage());
+            List<PrezzoStorico> storici = prezzoStoricoRepository
+                    .findBySimboloOrderByDataAsc(simbolo.toUpperCase());
+            if (!storici.isEmpty()) {
+                return storici.get(storici.size() - 1).getClose();
+            }
+            throw new RuntimeException("Prezzo non disponibile per " + simbolo + " e nessun dato storico in DB.");
+        }
     }
 
     @Cacheable(value = "prezziStock", key = "#simbolo")
@@ -82,7 +92,7 @@ public class PrezzoService {
         } catch (RuntimeException e) {
             log.warn("Alpha Vantage non disponibile per {}, uso ultimo prezzo dal DB: {}", simbolo, e.getMessage());
             List<PrezzoStorico> storici = prezzoStoricoRepository
-                    .findBySimboloAndFonteOrderByDataAsc(simbolo.toUpperCase(), "ALPHA_VANTAGE");
+                    .findBySimboloOrderByDataAsc(simbolo.toUpperCase());
             if (!storici.isEmpty()) {
                 return storici.get(storici.size() - 1).getClose();
             }
