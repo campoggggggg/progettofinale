@@ -49,7 +49,7 @@ Il progetto copre l'intero stack applicativo: dalla raccolta di dati di mercato 
 | **Linguaggio Frontend** | TypeScript | 5.4 | JavaScript tipizzato |
 | **Web Server** | Nginx | alpine | Reverse proxy e file statici |
 | **Containerizzazione** | Docker + Docker Compose | — | Deploy multi-container |
-| **API Esterne** | Alpha Vantage, CoinGecko | — | Prezzi azioni e crypto |
+| **API Esterne** | Alpha Vantage, CoinGecko, Stooq | — | Prezzi azioni e crypto |
 
 ---
 
@@ -61,28 +61,25 @@ Il progetto copre l'intero stack applicativo: dalla raccolta di dati di mercato 
 - Sessioni stateless via JWT — nessun server-side session
 
 ### Scenari di Investimento
-- Creazione di scenari con budget iniziale immutabile e data di creazione
-- Aggiunta di transazioni (acquisto di asset) con prezzo e quantità
-- Modifica nome e descrizione scenario
+- Creazione di scenari con budget iniziale
+- Aggiunta di transazioni
 - Eliminazione con cascade sulle transazioni associate
 - Panoramica del budget residuo e del valore corrente del portafoglio
 
 ### Dati di Mercato in Tempo Reale
-- Prezzi OHLC (Open/High/Low/Close) da **Alpha Vantage** (azioni) e **CoinGecko** (crypto)
-- Persistenza progressiva su MySQL per arricchire lo storico nel tempo
-- Cache Redis a due livelli (TTL 5 min per prezzi correnti, 24h per parametri statistici)
-- Export dati storici in formato **CSV**
+- Prezzi OHLC (Open/High/Low/Close) da **Alpha Vantage** (azioni), **CoinGecko** (crypto) e **Stooq** (persistenza dati storici)
+- Cache Redis (24h per aggiornamenti su tabella dati storici)
 
 ### Proiezioni e Performance
 - Valore corrente del portafoglio calcolato in tempo reale
-- P&L storico (performance rispetto al prezzo di acquisto)
-- Proiezioni a **6 mesi, 1 anno e 5 anni**
+- P&L | Profit & Loss
+- Proiezioni a **1, 3 e 5 anni**
 
 ### Simulazione Monte Carlo (GBM)
 - Modello **Geometric Brownian Motion** con 10.000 percorsi indipendenti
-- Parametri μ (rendimento medio) e σ (volatilità) calcolati da dati storici reali
-- Output: distribuzione percentilare **P10 / P50 / P90** del valore futuro
-- Orizzonti temporali: 126 giorni, 252 giorni, 1.260 giorni di trading
+- Parametri μ [mu] (rendimento medio) e σ [sigma] (variazione standard) calcolati da dati storici reali
+- Distribuzione dei percentili **P10 / P50 / P90**
+- Visualizzazione a schermo della simulazione su assi P&L/tempo
 
 ---
 
@@ -132,12 +129,10 @@ Il database MySQL è composto da **5 entità** con le seguenti relazioni:
 │  simbolo                           │
 │  data                              │
 │  open, high, low, close            │
-│  fonte  ("ALPHA_VANTAGE"|"COINGECKO")│
+│  fonte  ("ALPHA_VANTAGE"|"COINGECKO"|"STOOQ")│
 │  UNIQUE (simbolo, data, fonte)     │
 └────────────────────────────────────┘
 ```
-
-> **Nota di design:** la tabella `transazioni_scenario` è una *junction table* che disaccoppia le transazioni dagli scenari, permettendo potenzialmente il riutilizzo di transazioni tra scenari diversi e garantendo eliminazioni a cascata corrette.
 
 ---
 
@@ -154,13 +149,6 @@ Il database MySQL è composto da **5 entità** con le seguenti relazioni:
 - Filter `JwtFilter` (`OncePerRequestFilter`) intercetta ogni richiesta
 - Frontend Angular rileva il 401, chiama `/api/auth/refresh` e ritenta automaticamente
 
-### Controllo degli Accessi
-
-- **CORS** limitato all'origine del frontend (`http://localhost:4200`)
-- **CSRF** disabilitato (sessioni stateless, nessun cookie)
-- **Ownership Check** su ogni operazione sullo scenario: `scenario.utente.id == authenticatedUser.id`
-  → Prevenzione IDOR (Insecure Direct Object Reference — OWASP A01:2021)
-- **SessionCreationPolicy.STATELESS** — nessuno stato server-side
 
 ### Password
 
@@ -176,14 +164,20 @@ progettofinale/
 │
 ├── koinsim/                          # Backend — Spring Boot
 │   ├── src/main/java/com/example/koinsim/
-│   │   ├── config/                   # Configurazioni (Security, Redis, WebClient)
+│   │   ├── config/                   # Configurazioni (Security, Redis, WebClient, App)
 │   │   ├── controller/               # Controller REST (Auth, Scenario, MarketData)
-│   │   ├── model/                    # Entità JPA (Utente, Scenario, Transazione…)
-│   │   ├── repository/               # Spring Data JPA Repositories
-│   │   ├── service/                  # Business logic (Auth, Scenario, MonteCarlo…)
+│   │   │                             #   + GlobalExceptionHandler
+│   │   ├── model/                    # Entità JPA (Utente, Scenario, Transazione,
+│   │   │                             #   TransazioneScenario, PrezzoStorico, TipoAsset)
+│   │   ├── repository/               # Spring Data JPA Repositories (5 interfacce)
+│   │   ├── service/                  # Business logic: AuthService, ScenarioServiceImpl,
+│   │   │                             #   MarketDataService, MonteCarloService,
+│   │   │                             #   PortfolioService, PrezzoService
 │   │   ├── security/                 # JwtUtil, JwtFilter
-│   │   ├── dto/                      # Request/Response DTO
-│   │   └── exception/                # Eccezioni custom e GlobalExceptionHandler
+│   │   ├── dto/                      # Request/Response DTO (login, scenario,
+│   │   │                             #   transazione, proiezioni, montecarlo…)
+│   │   └── exception/                # Eccezioni custom (ApiLimit, DataPersistence,
+│   │                                 #   SymbolNotFound)
 │   ├── Dockerfile
 │   ├── Docker-compose.yaml
 │   └── pom.xml
@@ -258,8 +252,6 @@ Tutti i container comunicano sulla rete bridge `koinsim_net`. Le credenziali e l
 | **Strategy** | `MarketDataService` switch su `TipoAsset` | Selezione algoritmo runtime (STOCK / CRYPTO) |
 | **Builder** | `@Builder` Lombok su entità e DTO | Costruzione fluente degli oggetti |
 | **DTO** | `ScenarioRequest`, `ScenarioResponse` | Disaccoppiamento modello interno da contratto API |
-| **Chain of Responsibility** | `JwtFilter` → `OncePerRequestFilter` | Catena filtri sequenziale Spring Security |
-| **Global Exception Handler** | `@RestControllerAdvice` | Risposte di errore uniformi in JSON |
 | **Dependency Inversion** | Interfacce di service | Disaccoppiamento client da implementazione |
 
 ### Design Patterns — Frontend
@@ -280,16 +272,18 @@ Tutti i container comunicano sulla rete bridge `koinsim_net`. Le credenziali e l
 Il cuore analitico di KoinSim è il modello **Geometric Brownian Motion**:
 
 ```
+$$
 S(t) = S(t-1) × exp( (μ - σ²/2)·Δt + σ·√Δt·Z )
+$$
+
 ```
 
-dove `Z ~ N(0,1)` è una variabile casuale normale standard.
+dove $Z ~ N(0,1)$ è una variabile casuale normale standard.
 
 **Processo:**
 1. Calcolo di μ e σ dai rendimenti logaritmici storici di ogni asset
-2. Ponderazione dei parametri per la composizione del portafoglio
-3. Esecuzione di **10.000 percorsi** per ciascun orizzonte temporale
-4. Calcolo dei percentili **P10 / P50 / P90** tramite Apache Commons Math
+2. Esecuzione di **10.000 percorsi casuali** con la formula di Monte Carlo
+3. Calcolo dei percentili **P10 / P50 / P90** tramite Apache Commons Math
 
 Il risultato è una distribuzione di probabilità del valore futuro del portafoglio, non una singola previsione.
 
@@ -298,22 +292,25 @@ Il risultato è una distribuzione di probabilità del valore futuro del portafog
 ## Principali Endpoint API
 
 ```
-POST   /api/auth/registrazione          Registrazione nuovo utente
-POST   /api/auth/login                  Login → access + refresh token
-POST   /api/auth/refresh                Rinnovo access token
+POST   /api/auth/registrazione                        Registrazione nuovo utente
+POST   /api/auth/login                                Login → access + refresh token
+POST   /api/auth/refresh                              Rinnovo access token
+POST   /api/auth/logout                               Logout (invalida il refresh token)
 
-GET    /api/scenari                     Lista scenari dell'utente autenticato
-POST   /api/scenari                     Crea nuovo scenario
-PUT    /api/scenari/{id}                Modifica scenario
-DELETE /api/scenari/{id}                Elimina scenario
+GET    /api/scenari                                   Lista scenari dell'utente autenticato
+POST   /api/scenari                                   Crea nuovo scenario
+GET    /api/scenari/{id}                              Dettaglio singolo scenario
+PUT    /api/scenari/{id}                              Modifica scenario
+DELETE /api/scenari/{id}                              Elimina scenario (cascade transazioni)
 
-POST   /api/scenari/{id}/transazioni    Aggiunge transazione allo scenario
-DELETE /api/scenari/{id}/transazioni/{tid}
+POST   /api/scenari/{id}/transazioni                  Aggiunge transazione allo scenario
+DELETE /api/scenari/{id}/transazioni/{transazioneId}  Rimuove transazione dallo scenario
 
-GET    /api/scenari/{id}/proiezioni     P&L storiche e proiezioni future
-GET    /api/scenari/{id}/montecarlo     Simulazione Monte Carlo (GBM)
+GET    /api/scenari/{id}/proiezioni                   P&L storiche e proiezioni future
+GET    /api/scenari/{id}/montecarlo                   Simulazione Monte Carlo (GBM)
 
-POST   /api/market-data/fetch           Scarica dati da Alpha Vantage / CoinGecko
+POST   /api/market-data/fetch                         Scarica dati da Alpha Vantage / CoinGecko / Stooq
+GET    /api/market-data/simboli                       Lista simboli con dati storici disponibili
 ```
 
 ---
@@ -324,9 +321,7 @@ POST   /api/market-data/fetch           Scarica dati da Alpha Vantage / CoinGeck
 
 | Nome | GitHub | LinkedIn |
 |---|---|---|---|
-| **Maria** | [![GitHub](https://img.shields.io/badge/GitHub-your--username-181717?style=flat&logo=github)](https://github.com/bayloncina) | [![LinkedIn](https://img.shields.io/badge/LinkedIn-Maria_Baylon-0A66C2?style=flat&logo=linkedin)](https://www.linkedin.com/in/maria-baylon/) |
-| **Gabriele** | [![GitHub](https://img.shields.io/badge/GitHub-your--username-181717?style=flat&logo=github)](https://github.com/your-username) | [![LinkedIn](https://img.shields.io/badge/LinkedIn-Gabriele-0A66C2?style=flat&logo=linkedin)](https://linkedin.com/in/your-profile) |
-
-Sviluppato come progetto accademico · Stack completo full-stack con focus su finanza quantitativa e architetture moderne
+| **Maria Baylon** | [![GitHub](https://img.shields.io/badge/GitHub-your--username-181717?style=flat&logo=github)](https://github.com/bayloncina) | [![LinkedIn](https://img.shields.io/badge/LinkedIn-Maria_Baylon-0A66C2?style=flat&logo=linkedin)](https://www.linkedin.com/in/maria-baylon/) |
+| **Gabriele Campomizzi** | [![GitHub](https://img.shields.io/badge/GitHub-your--username-181717?style=flat&logo=github)](https://github.com/campoggggggg) | [![LinkedIn](https://img.shields.io/badge/LinkedIn-Gabriele-0A66C2?style=flat&logo=linkedin)](https://linkedin.com/campog) |
 
 </div>
