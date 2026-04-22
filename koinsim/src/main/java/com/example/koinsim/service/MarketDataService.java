@@ -48,6 +48,23 @@ public class MarketDataService {
 
     private static final int STOOQ_STALE_DAYS = 100;
 
+    // Mapping CoinGecko ID → simbolo Stooq per le crypto più comuni
+    private static final Map<String, String> CRYPTO_STOOQ = Map.ofEntries(
+            Map.entry("bitcoin",        "BTC.V"),
+            Map.entry("ethereum",       "ETH.V"),
+            Map.entry("dogecoin",       "DOGE.V"),
+            Map.entry("litecoin",       "LTC.V"),
+            Map.entry("solana",         "SOL.V"),
+            Map.entry("ripple",         "XRP.V"),
+            Map.entry("cardano",        "ADA.V"),
+            Map.entry("polkadot",       "DOT.V"),
+            Map.entry("chainlink",      "LINK.V"),
+            Map.entry("avalanche-2",    "AVAX.V"),
+            Map.entry("matic-network",  "MATIC.V"),
+            Map.entry("uniswap",        "UNI.V"),
+            Map.entry("shiba-inu",      "SHIB.V")
+    );
+
     private final PrezzoStoricoRepository repository;
     private final WebClient webClient;
     private final StringRedisTemplate redis;
@@ -85,6 +102,10 @@ public class MarketDataService {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public MarketDataResponse fetchAndPersistAll(String symbol, TipoAsset type, String stooqSymbol) {
         String sym       = normalizeSymbol(symbol, type);
+        // Se stooqSymbol non è fornito, lo deriva automaticamente dal simbolo principale
+        String stooqSym  = (stooqSymbol != null && !stooqSymbol.isBlank())
+                ? stooqSymbol
+                : deriveStooqSymbol(sym, type);
         String fetchKey  = FETCH_PREFIX + sym + ":" + type;
         String paramsKey = PARAMS_PREFIX + sym + ":" + type;
 
@@ -102,15 +123,15 @@ public class MarketDataService {
             }
         }
 
-        // --- Step 1: Stooq bulk storico (se fornito e dati scaduti o assenti) ---
-        if (stooqSymbol != null && !stooqSymbol.isBlank()) {
+        // --- Step 1: Stooq bulk storico (se derivabile e dati scaduti o assenti) ---
+        if (stooqSym != null) {
             try {
                 LocalDate ultimaStooq = repository.findLastDate(sym, FONTE_STOOQ).orElse(null);
                 boolean scaduto = ultimaStooq == null ||
                         ChronoUnit.DAYS.between(ultimaStooq, LocalDate.now()) > STOOQ_STALE_DAYS;
                 if (scaduto) {
-                    log.info("Fetch Stooq per {} (ultimaData={})", sym, ultimaStooq);
-                    List<PrezzoStorico> stooqData = fetchStooq(stooqSymbol, sym);
+                    log.info("Fetch Stooq per {} → {} (ultimaData={})", sym, stooqSym, ultimaStooq);
+                    List<PrezzoStorico> stooqData = fetchStooq(stooqSym, sym);
                     persistiConFonte(sym, stooqData, FONTE_STOOQ, type);
                 } else {
                     log.info("Stooq già aggiornato per {} (ultimaData={}), skip", sym, ultimaStooq);
@@ -438,6 +459,15 @@ public class MarketDataService {
 
     private String normalizeSymbol(String symbol, TipoAsset type) {
         return type == TipoAsset.CRYPTO ? symbol.toLowerCase() : symbol.toUpperCase();
+    }
+
+    // Deriva il simbolo Stooq automaticamente: STOCK → "SYMBOL.US", CRYPTO → mappa predefinita
+    private String deriveStooqSymbol(String sym, TipoAsset type) {
+        return switch (type) {
+            case STOCK  -> sym.toUpperCase() + ".US";
+            case CRYPTO -> CRYPTO_STOOQ.get(sym.toLowerCase());
+            case STOOQ  -> null;
+        };
     }
 
     private String fonteFor(TipoAsset type) {

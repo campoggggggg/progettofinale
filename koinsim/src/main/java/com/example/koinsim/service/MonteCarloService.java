@@ -74,7 +74,7 @@ public class MonteCarloService {
             String simbolo = t.getTransazione().getSimbolo();
             if (!datiMercato.containsKey(simbolo)) {
                 datiMercato.put(simbolo,
-                        marketDataService.fetchAndPersistAll(simbolo, t.getTransazione().getTipoAsset()));
+                        marketDataService.fetchAndPersistAll(simbolo, t.getTransazione().getTipoAsset(), null));
                 prezziCorrenti.put(simbolo,
                         prezzoService.getPrezzo(simbolo, t.getTransazione().getTipoAsset().name()));
             }
