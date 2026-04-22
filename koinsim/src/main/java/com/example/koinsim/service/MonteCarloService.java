@@ -32,6 +32,7 @@ public class MonteCarloService {
     private static final int N_SIMULAZIONI = 10_000;
     private static final int GIORNI_SEI_MESI = 126;
     private static final int GIORNI_UN_ANNO = 252;
+    private static final int GIORNI_TRE_ANNI = 756;
     private static final int GIORNI_CINQUE_ANNI = 1260;
 
     private final ScenarioRepository scenarioRepository;
@@ -110,6 +111,8 @@ public class MonteCarloService {
                 transazioni, muPerSimbolo, sigmaPerSimbolo, prezziCorrenti, GIORNI_SEI_MESI);
         double[] valoriUnAnno = simulaPortafoglio(
                 transazioni, muPerSimbolo, sigmaPerSimbolo, prezziCorrenti, GIORNI_UN_ANNO);
+        double[] valoriTreAnni = simulaPortafoglio(
+                transazioni, muPerSimbolo, sigmaPerSimbolo, prezziCorrenti, GIORNI_TRE_ANNI);
         double[] valoriCinqueAnni = simulaPortafoglio(
                 transazioni, muPerSimbolo, sigmaPerSimbolo, prezziCorrenti, GIORNI_CINQUE_ANNI);
 
@@ -122,6 +125,7 @@ public class MonteCarloService {
                 .nSimulazioni(N_SIMULAZIONI)
                 .seiMesi(calcolaRisultato(valoriSeiMesi, GIORNI_SEI_MESI, "6 mesi", valoreCorrente, costoTotale, budgetIniziale))
                 .unAnno(calcolaRisultato(valoriUnAnno, GIORNI_UN_ANNO, "1 anno", valoreCorrente, costoTotale, budgetIniziale))
+                .treAnni(calcolaRisultato(valoriTreAnni, GIORNI_TRE_ANNI, "3 anni", valoreCorrente, costoTotale, budgetIniziale))
                 .cinqueAnni(calcolaRisultato(valoriCinqueAnni, GIORNI_CINQUE_ANNI, "5 anni", valoreCorrente, costoTotale, budgetIniziale))
                 .build();
     }

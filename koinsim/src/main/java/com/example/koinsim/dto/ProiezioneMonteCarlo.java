@@ -35,6 +35,9 @@ public class ProiezioneMonteCarlo {
     /** Risultato per l'orizzonte a 1 anno (252 giorni di borsa). */
     private RisultatoMonteCarlo unAnno;
 
+    /** Risultato per l'orizzonte a 3 anni (756 giorni di borsa). */
+    private RisultatoMonteCarlo treAnni;
+
     /** Risultato per l'orizzonte a 5 anni (1260 giorni di borsa). */
     private RisultatoMonteCarlo cinqueAnni;
 }

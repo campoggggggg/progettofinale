@@ -91,6 +91,7 @@ export interface ProiezioneMonteCarlo {
   nSimulazioni: number;
   seiMesi: RisultatoMonteCarlo;
   unAnno: RisultatoMonteCarlo;
+  treAnni: RisultatoMonteCarlo;
   cinqueAnni: RisultatoMonteCarlo;
 }
 
