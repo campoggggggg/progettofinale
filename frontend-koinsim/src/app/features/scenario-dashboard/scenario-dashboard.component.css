@@ -193,12 +193,14 @@ mat-chip.chip-crypto {
   font-size: 0.78rem;
   color: #5C5F7A;
   font-weight: 500;
+  flex-wrap: wrap;
 }
 
 .percentile-toggle {
   display: flex;
   gap: 8px;
   margin-bottom: 14px;
+  flex-wrap: wrap;
 }
 
 .montecarlo-summary {
@@ -243,4 +245,75 @@ mat-chip.chip-crypto {
   height: 10px;
   border-radius: 50%;
   margin-right: 2px;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .dash-container {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .metrics-cards {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .metric-value {
+    font-size: 1.2rem;
+  }
+
+  .pnl-card mat-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .pnl-legend {
+    gap: 8px;
+  }
+
+  .montecarlo-summary {
+    gap: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dash-container {
+    padding: 8px;
+    gap: 10px;
+  }
+
+  .metrics-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .metric-value {
+    font-size: 1.3rem;
+  }
+
+  .metric-card mat-card-content {
+    padding: 14px 12px !important;
+  }
+
+  .allocation-labels {
+    gap: 12px;
+    font-size: 0.72rem;
+  }
+
+  .percentile-toggle {
+    gap: 6px;
+  }
+
+  .percentile-toggle button {
+    font-size: 0.75rem;
+    padding: 0 8px;
+  }
+
+  .montecarlo-summary {
+    gap: 14px;
+  }
+
+  .mc-median {
+    font-size: 0.95rem;
+  }
 }

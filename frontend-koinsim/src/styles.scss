@@ -199,3 +199,14 @@ mat-card, .mat-mdc-card {
   border-radius: 50%;
   margin-right: 4px;
 }
+
+/* ── Responsive global ──────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .toolbar-logo {
+    height: 28px;
+  }
+
+  .metric-value {
+    font-size: 1.3rem;
+  }
+}
