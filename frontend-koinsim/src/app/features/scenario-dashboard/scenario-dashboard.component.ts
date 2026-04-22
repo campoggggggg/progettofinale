@@ -122,8 +122,8 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
     };
 
     return [
-      { label: '6 Mesi', ...calc(mc.seiMesi) },
       { label: '1 Anno', ...calc(mc.unAnno) },
+      { label: '3 Anni', ...calc(mc.treAnni) },
       { label: '5 Anni', ...calc(mc.cinqueAnni) },
     ];
   }
@@ -351,28 +351,29 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
     const paths = this.simulationPaths;
     if (!paths.length) return;
 
-    const totalMonths = 60;
-    const milestoneSet = new Set([0, 6, 12, 60]);
+    // Settimane: 0..260 (5 anni). Milestone: 0=Oggi, 52=1 Anno, 156=3 Anni, 260=5 Anni
+    const totalWeeks = 260;
+    const milestoneSet = new Set([0, 52, 156, 260]);
 
-    // Percentili empirici a ogni mese dai path simulati
+    // Percentili empirici a ogni settimana dai path simulati
     const p10Line: number[] = [];
     const p50Line: number[] = [];
     const p90Line: number[] = [];
 
-    for (let m = 0; m <= totalMonths; m++) {
-      const vals = paths.map(p => p[m]).sort((a, b) => a - b);
+    for (let w = 0; w <= totalWeeks; w++) {
+      const vals = paths.map(p => p[w]).sort((a, b) => a - b);
       const n = vals.length;
       p10Line.push(vals[Math.floor(0.10 * n)] ?? 0);
       p50Line.push(vals[Math.floor(0.50 * n)] ?? 0);
       p90Line.push(vals[Math.floor(0.90 * n)] ?? 0);
     }
 
-    // Asse X: 61 label mensili, testo visibile solo ai 4 milestone
-    const xLabels = Array.from({ length: totalMonths + 1 }, (_, m) => {
-      if (m === 0) return 'Oggi';
-      if (m === 6) return '6 Mesi';
-      if (m === 12) return '1 Anno';
-      if (m === 60) return '5 Anni';
+    // Asse X: 261 label settimanali, testo visibile solo ai 4 milestone
+    const xLabels = Array.from({ length: totalWeeks + 1 }, (_, w) => {
+      if (w === 0) return 'Oggi';
+      if (w === 52) return '1 Anno';
+      if (w === 156) return '3 Anni';
+      if (w === 260) return '5 Anni';
       return '';
     });
 
@@ -513,15 +514,15 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
     const sigma = Math.max((logP90 - logMed) / (Math.sqrt(T) * 1.2816), 0.001);
     const annualDrift = logMed / T;
 
-    // Passi mensili: 0..60 mesi (5 anni), dt = 1/12 anno
-    const dt = 1 / 12;
-    const totalMonths = 60;
+    // Passi settimanali: 0..260 settimane (5 anni), dt = 1/52 anno
+    const dt = 1 / 52;
+    const totalWeeks = 260;
     const paths: number[][] = [];
 
     for (let i = 0; i < nPaths; i++) {
       const path: number[] = [oggi];
       let logV = Math.log(V0);
-      for (let m = 1; m <= totalMonths; m++) {
+      for (let w = 1; w <= totalWeeks; w++) {
         logV += annualDrift * dt + sigma * Math.sqrt(dt) * this.sampleNormal();
         path.push(Math.exp(logV) - costo);
       }
