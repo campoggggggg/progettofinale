@@ -82,6 +82,7 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
   txColumns = ['simbolo', 'tipo', 'quantita', 'prezzo', 'totale', 'data', 'azioni'];
 
   private charts: Chart[] = [];
+  private simulationPaths: number[][] = [];
 
   // ── Calcolati ────────────────────────────────────────────────────────────
 
@@ -188,6 +189,7 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
     this.scenarioSvc.montecarlo(Number(this.id)).subscribe({
       next: mc => {
         this.montecarlo = mc;
+        this.simulationPaths = this.generateSimulationPaths(mc, 500);
         this.loadingMonteCarlo = false;
         this.cdr.detectChanges();
         setTimeout(() => this.drawPnlChart(), 50);
@@ -325,7 +327,7 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
                 const total = (ctx.dataset.data as number[]).reduce((a, b) => a + b, 0);
                 const pct = ((val / total) * 100).toFixed(1);
                 const name = ctx.label ?? '';
-                return ` ${name}  ${pct}%  (€${val.toLocaleString('it-IT', { maximumFractionDigits: 0 })})`;
+                return ` ${name}  ${pct}%  ($${val.toLocaleString('it-IT', { maximumFractionDigits: 0 })})`;
               },
             },
           },
@@ -336,9 +338,9 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
   }
 
   /**
-   * Grafico P&L Monte Carlo con 3 linee percentili (10°/50°/90°).
+   * Grafico P&L Monte Carlo con 3 linee percentili (10°/50°/90°) e fan di simulazioni in grigio.
    * X: [Oggi, 6 Mesi, 1 Anno, 5 Anni]
-   * Y: P&L in € rispetto al costo totale
+   * Y: P&L in $ rispetto al costo totale
    */
   private drawPnlChart(): void {
     if (!this.pnlChartRef || !this.montecarlo) return;
@@ -349,10 +351,59 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
     const oggi = mc.seiMesi.valoreCorrente - mc.costoTotale;
     const costo = mc.costoTotale;
 
-    // P&L = valore percentile - costo totale
     const pnl10 = [oggi, mc.seiMesi.percentile10 - costo, mc.unAnno.percentile10 - costo, mc.cinqueAnni.percentile10 - costo];
     const pnl50 = [oggi, mc.seiMesi.pnlMediano, mc.unAnno.pnlMediano, mc.cinqueAnni.pnlMediano];
     const pnl90 = [oggi, mc.seiMesi.percentile90 - costo, mc.unAnno.percentile90 - costo, mc.cinqueAnni.percentile90 - costo];
+
+    const paths = this.simulationPaths;
+
+    // Milestones (mesi) → indice categorico X: 0=oggi, 6=6mesi, 12=1anno, 60=5anni
+    const milestonesMonths = [0, 6, 12, 60];
+
+    const simulationFanPlugin = {
+      id: 'simulationFan',
+      beforeDatasetsDraw: (chart: any) => {
+        const ctx2 = chart.ctx as CanvasRenderingContext2D;
+        const xScale = chart.scales['x'];
+        const yScale = chart.scales['y'];
+        const area = chart.chartArea;
+
+        const catPixels: number[] = [0, 1, 2, 3].map((i: number) => xScale.getPixelForValue(i));
+
+        const monthToPixel = (m: number): number => {
+          if (m <= 0) return catPixels[0];
+          if (m >= 60) return catPixels[3];
+          for (let s = 0; s < 3; s++) {
+            if (m >= milestonesMonths[s] && m <= milestonesMonths[s + 1]) {
+              const t = (m - milestonesMonths[s]) / (milestonesMonths[s + 1] - milestonesMonths[s]);
+              return catPixels[s] + t * (catPixels[s + 1] - catPixels[s]);
+            }
+          }
+          return catPixels[3];
+        };
+
+        ctx2.save();
+        ctx2.beginPath();
+        ctx2.rect(area.left, area.top, area.width, area.height);
+        ctx2.clip();
+
+        ctx2.strokeStyle = 'rgba(160,163,189,0.10)';
+        ctx2.lineWidth = 0.7;
+
+        for (const path of paths) {
+          ctx2.beginPath();
+          path.forEach((val, m) => {
+            const x = monthToPixel(m);
+            const y = yScale.getPixelForValue(val);
+            if (m === 0) ctx2.moveTo(x, y);
+            else ctx2.lineTo(x, y);
+          });
+          ctx2.stroke();
+        }
+
+        ctx2.restore();
+      },
+    };
 
     const chart = new Chart(this.pnlChartRef.nativeElement, {
       type: 'line',
@@ -365,7 +416,7 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
             borderColor: '#E74C3C',
             backgroundColor: 'rgba(231,76,60,0.07)',
             fill: false,
-            tension: 0.4,
+            tension: 0,
             pointRadius: 5,
             pointHoverRadius: 8,
           },
@@ -375,7 +426,7 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
             borderColor: '#3498DB',
             backgroundColor: 'rgba(52,152,219,0.07)',
             fill: false,
-            tension: 0.4,
+            tension: 0,
             pointRadius: 5,
             pointHoverRadius: 8,
           },
@@ -385,34 +436,38 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
             borderColor: '#2ECC71',
             backgroundColor: 'rgba(46,204,113,0.07)',
             fill: false,
-            tension: 0.4,
+            tension: 0,
             pointRadius: 5,
             pointHoverRadius: 8,
           },
         ],
       },
+      plugins: [simulationFanPlugin],
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        animation: false,
         plugins: {
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: ctx =>
-                ` ${ctx.dataset.label}: €${(ctx.parsed.y as number).toLocaleString('it-IT', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}`,
+              label: ctx => {
+                const n = ctx.parsed.y as number;
+                const abs = Math.abs(n).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                return ` ${ctx.dataset.label}: ${n >= 0 ? '+$' : '-$'}${abs}`;
+              },
             },
           },
         },
         scales: {
           y: {
-            title: { display: true, text: 'P&L (€)' },
+            title: { display: true, text: 'P&L ($)' },
             ticks: {
-              callback: v =>
-                (Number(v) >= 0 ? '+' : '') +
-                Number(v).toLocaleString('it-IT', { maximumFractionDigits: 0 }) + '€',
+              callback: v => {
+                const n = Number(v);
+                const abs = Math.abs(n).toLocaleString('it-IT', { maximumFractionDigits: 0 });
+                return (n >= 0 ? '+$' : '-$') + abs;
+              },
             },
           },
         },
@@ -421,7 +476,50 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
     this.charts.push(chart);
   }
 
-  // ── Helper privato ───────────────────────────────────────────────────────
+  // ── Helper privati ───────────────────────────────────────────────────────
+
+  private generateSimulationPaths(mc: ProiezioneMonteCarlo, nPaths: number): number[][] {
+    const V0 = mc.seiMesi.valoreCorrente;
+    const costo = mc.costoTotale;
+    const oggi = V0 - costo;
+
+    if (V0 <= 0) return [];
+
+    const T = 0.5;
+    const V_median = V0 + mc.seiMesi.pnlMediano;
+    const P90 = mc.seiMesi.percentile90;
+
+    if (V_median <= 0 || P90 <= 0) return [];
+
+    const logMed = Math.log(Math.max(V_median, V0 * 0.0001) / V0);
+    const logP90 = Math.log(Math.max(P90, V0 * 0.0001) / V0);
+    const sigma = Math.max((logP90 - logMed) / (Math.sqrt(T) * 1.2816), 0.001);
+    const annualDrift = logMed / T;
+
+    // Passi mensili: 0..60 mesi (5 anni), dt = 1/12 anno
+    const dt = 1 / 12;
+    const totalMonths = 60;
+    const paths: number[][] = [];
+
+    for (let i = 0; i < nPaths; i++) {
+      const path: number[] = [oggi];
+      let logV = Math.log(V0);
+      for (let m = 1; m <= totalMonths; m++) {
+        logV += annualDrift * dt + sigma * Math.sqrt(dt) * this.sampleNormal();
+        path.push(Math.exp(logV) - costo);
+      }
+      paths.push(path);
+    }
+
+    return paths;
+  }
+
+  private sampleNormal(): number {
+    let u = 0, v = 0;
+    while (u === 0) u = Math.random();
+    while (v === 0) v = Math.random();
+    return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+  }
 
   private allocationPercent(tipo: 'STOCK' | 'CRYPTO'): number {
     if (!this.scenario || this.scenario.budgetIniziale === 0) return 0;

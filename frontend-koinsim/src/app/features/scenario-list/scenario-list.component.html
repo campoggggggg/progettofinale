@@ -50,18 +50,18 @@
           <div class="scenario-budget">
             <div class="budget-item">
               <span class="budget-label">Budget</span>
-              <span class="budget-val">{{ s.budgetIniziale | currency:'EUR':'symbol':'1.0-0' }}</span>
+              <span class="budget-val">{{ s.budgetIniziale | currency:'USD':'symbol':'1.0-0' }}</span>
             </div>
             <div class="budget-item">
               <span class="budget-label">Speso</span>
               <span class="budget-val speso">
-                {{ s.budgetIniziale - s.budgetRimanente | currency:'EUR':'symbol':'1.0-0' }}
+                {{ s.budgetIniziale - s.budgetRimanente | currency:'USD':'symbol':'1.0-0' }}
               </span>
             </div>
             <div class="budget-item">
               <span class="budget-label">Disponibile</span>
               <span class="budget-val rimanente">
-                {{ s.budgetRimanente | currency:'EUR':'symbol':'1.0-0' }}
+                {{ s.budgetRimanente | currency:'USD':'symbol':'1.0-0' }}
               </span>
             </div>
           </div>

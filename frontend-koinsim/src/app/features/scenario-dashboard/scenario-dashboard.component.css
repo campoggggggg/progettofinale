@@ -77,11 +77,11 @@
 }
 
 .metric-value.speso {
-  color: #E74C3C;
+  color: #F5B041;
 }
 
 .metric-value.rimanente {
-  color: #2ECC71;
+  color: #3498DB;
 }
 
 /* ── Allocation bar ──────────────────────────────────────────────── */
@@ -230,11 +230,11 @@ mat-chip.chip-crypto {
 }
 
 .mc-median.positive {
-  color: #2ECC71;
+  color: #3498DB;
 }
 
 .mc-median.negative {
-  color: #E74C3C;
+  color: #F5B041;
 }
 
 .legend-dot {
