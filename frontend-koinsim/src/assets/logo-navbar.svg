@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 130 130" width="130" height="130">
+  <defs>
+    <style>
+      .ks-symbol-k-vertical { stroke: #FFFFFF; stroke-width: 6; stroke-linecap: round; }
+      .ks-symbol-k-branch-1 { fill: none; stroke: #00D4AA; stroke-width: 5; stroke-linecap: round; }
+      .ks-symbol-k-branch-1-terminal { fill: #00D4AA; stroke: none; }
+      .ks-symbol-k-branch-2 { fill: none; stroke: #7B61FF; stroke-width: 3.5; stroke-linecap: round; opacity: 0.9; }
+      .ks-symbol-k-branch-2-terminal { fill: #7B61FF; stroke: none; opacity: 0.9; }
+      .ks-symbol-k-branch-3 { fill: none; stroke: #00D4AA; stroke-width: 5; stroke-linecap: round; opacity: 0.5; }
+      .ks-symbol-k-branch-3-terminal { fill: #00D4AA; stroke: none; opacity: 0.5; }
+      .ks-symbol-k-origin { fill: #111439; stroke: #FFFFFF; stroke-width: 3; }
+    </style>
+  </defs>
+
+  <g transform="translate(15, 15)">
+    <line x1="20" y1="0" x2="20" y2="100" class="ks-symbol-k-vertical" />
+
+    <path d="M20,50 C40,30 70,5 90,5" class="ks-symbol-k-branch-1" />
+    <circle cx="90" cy="5" r="5" class="ks-symbol-k-branch-1-terminal" />
+
+    <path d="M20,50 C45,35 65,15 90,15" class="ks-symbol-k-branch-2" />
+    <circle cx="90" cy="15" r="4" class="ks-symbol-k-branch-2-terminal" />
+
+    <path d="M20,50 C40,70 70,95 90,95" class="ks-symbol-k-branch-3" />
+    <circle cx="90" cy="95" r="5" class="ks-symbol-k-branch-3-terminal" />
+
+    <circle cx="20" cy="50" r="8" class="ks-symbol-k-origin" />
+  </g>
+</svg>

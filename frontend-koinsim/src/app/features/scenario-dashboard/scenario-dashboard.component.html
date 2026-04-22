@@ -3,8 +3,8 @@
   <button mat-icon-button (click)="goBack()" matTooltip="Torna alla lista">
     <mat-icon>arrow_back</mat-icon>
   </button>
-  <mat-icon style="margin: 0 8px">show_chart</mat-icon>
-  <span>{{ scenario?.nome ?? 'Dashboard' }}</span>
+  <img src="assets/logo-navbar.svg" alt="Koinsim" class="toolbar-logo" />
+  <span style="margin-left: 12px">{{ scenario?.nome ?? 'Dashboard' }}</span>
   <span class="spacer"></span>
   <button mat-icon-button (click)="auth.logout()" matTooltip="Logout">
     <mat-icon>logout</mat-icon>

@@ -18,12 +18,19 @@
   padding: 20px 0 12px;
 }
 
-.auth-logo {
-  font-size: 52px;
-  width: 52px;
-  height: 52px;
-  color: #A9A3E0;
-  margin-bottom: 12px;
+.auth-logo-bg {
+  background: linear-gradient(145deg, #0B0D26, #111439);
+  border-radius: 16px;
+  padding: 12px 18px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-logo-img {
+  height: 90px;
+  width: auto;
 }
 
 .auth-form {

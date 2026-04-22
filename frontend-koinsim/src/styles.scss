@@ -116,6 +116,11 @@ mat-card, .mat-mdc-card {
 /* ── Utility ────────────────────────────────────────────────────── */
 .spacer { flex: 1 1 auto; }
 
+.toolbar-logo {
+  height: 40px;
+  width: auto;
+}
+
 /* ── Metric values ──────────────────────────────────────────────── */
 .metric-value {
   font-size: 2rem;
