@@ -3,21 +3,38 @@
 <mat-dialog-content>
   <form [formGroup]="form" class="dialog-form">
 
-    <!-- Simbolo con tipo derivato -->
+    <!-- Simbolo con autocomplete -->
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Simbolo</mat-label>
-      <mat-select formControlName="simboloSelezionato">
-        <mat-option *ngFor="let s of simboliDisponibili" [value]="s">
+      <input
+        matInput
+        formControlName="simbolo"
+        [matAutocomplete]="auto"
+        placeholder="Es. AAPL, bitcoin, MSFT..."
+      />
+      <mat-autocomplete #auto="matAutocomplete">
+        <mat-option *ngFor="let s of filteredSimboli" [value]="s.simbolo">
           {{ s.simbolo }} <span class="tipo-badge">{{ s.tipoAsset }}</span>
         </mat-option>
-      </mat-select>
-      <mat-hint *ngIf="form.get('simboloSelezionato')?.value as sel">
-        Tipo: {{ sel.tipoAsset }}
-      </mat-hint>
-      <mat-error *ngIf="form.get('simboloSelezionato')?.hasError('required')">
+      </mat-autocomplete>
+      <mat-error *ngIf="form.get('simbolo')?.hasError('required')">
         Campo obbligatorio
       </mat-error>
     </mat-form-field>
+
+    <!-- Selezione tipo asset: visibile solo per simboli non presenti nel DB -->
+    <div *ngIf="isNuovoSimbolo" class="tipo-toggle-wrapper">
+      <span class="tipo-label">Tipo asset (simbolo non in lista — seleziona manualmente)</span>
+      <mat-button-toggle-group formControlName="tipoAsset">
+        <mat-button-toggle value="STOCK">STOCK</mat-button-toggle>
+        <mat-button-toggle value="CRYPTO">CRYPTO</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+
+    <!-- Tipo rilevato automaticamente quando simbolo è in lista -->
+    <p *ngIf="!isNuovoSimbolo && form.get('tipoAsset')?.value" class="tipo-auto">
+      Tipo rilevato: <strong>{{ form.get('tipoAsset')?.value }}</strong>
+    </p>
 
     <!-- Percentuale budget -->
     <mat-form-field appearance="outline" class="full-width">
@@ -38,13 +55,15 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close>Annulla</button>
+  <button mat-button mat-dialog-close [disabled]="loading">Annulla</button>
   <button
     mat-raised-button
     color="primary"
-    [disabled]="form.invalid"
+    [disabled]="form.invalid || loading"
     (click)="confirm()"
   >
-    Aggiungi
+    <mat-spinner *ngIf="loading" diameter="18" class="spinner-inline"></mat-spinner>
+    <span *ngIf="!loading">Aggiungi</span>
+    <span *ngIf="loading">Caricamento...</span>
   </button>
 </mat-dialog-actions>

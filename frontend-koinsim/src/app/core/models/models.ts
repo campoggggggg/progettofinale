@@ -106,6 +106,7 @@ export interface SimboloDisponibile {
 export interface MarketDataRequest {
   symbol: string;
   type: TipoAsset;
+  stooqSymbol: string;
 }
 
 export interface MarketDataResponse {
