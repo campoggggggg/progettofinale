@@ -1,6 +1,10 @@
 <!-- Toolbar -->
-<mat-toolbar color="primary">
+<mat-toolbar color="primary" class="home-toolbar">
   <img src="assets/logo-navbar.svg" alt="Koinsim" class="toolbar-logo" />
+  <div class="toolbar-tagline">
+    <div><span class="tag-koin">Koin</span><span class="tag-rest">Sim</span></div>
+    <div><span class="tag-rest">simula. proietta. decidi.</span></div>
+  </div>
   <span class="spacer"></span>
   <button mat-icon-button (click)="auth.logout()" matTooltip="Logout">
     <mat-icon>logout</mat-icon>
