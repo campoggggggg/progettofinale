@@ -80,6 +80,9 @@ Infine, è stata sviluppata una visualizzazione interattiva mediante un frontend
 - Parametri μ [mu] (rendimento medio) e σ [sigma] (variazione standard) calcolati tramite dati storici reali
 - Distribuzione dei percentili **P10 / P50 / P90** i quali descrivono il caso pessismistico, il più probabile e quello ottimistico
 
+### Esportazione in PDF
+- Possibilità di esportare la dashboard come file .pdf
+
 ---
 
 ## Architettura del Database
