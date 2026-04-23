@@ -205,6 +205,7 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
     this.dialog
       .open(AddTransactionDialogComponent, {
         width: '460px',
+        maxHeight: '90vh',
         data: {
           budgetIniziale: this.scenario?.budgetIniziale ?? 0,
           budgetRimanente: this.scenario?.budgetRimanente ?? 0,

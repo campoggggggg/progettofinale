@@ -1,8 +1,8 @@
 .dialog-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding-top: 8px;
+  gap: 4px;
+  padding-top: 4px;
   min-width: 380px;
 }
 
@@ -19,7 +19,10 @@
 .tipo-toggle-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+  margin-bottom: 2px;
+  align-items: center;
+  
 }
 
 .tipo-label {
@@ -31,6 +34,7 @@
   font-size: 10px;
   opacity: 0.6;
   margin-left: 4px;
+  margin-right: 4px;
 }
 
 .tipo-auto {
