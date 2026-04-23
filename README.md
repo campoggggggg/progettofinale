@@ -21,7 +21,9 @@
 
 **Koinsim** nasce come piattaforma didattica e decisionale per la gestione di portafogli finanziari; permette di simulare investimenti multipli e di generare proiezioni dei rendimenti tramite il metodo Monte Carlo, un algoritmo computazionale basato sulla ripetizione di campionamenti casuali. 
 
-I dati di mercato vengono raccolti tramite chiamate API a diversi servizi, come Alpha Vantage e CoinGecko, che tuttavia offrono un numero limitato di richieste nei piani gratuiti. È stato quindi introdotto un sistema di caching basato su Redis per conservare i dati per 24 ore dalla prima richiesta. Un’ulteriore criticità è stata la necessità di disporre di una quantità sufficiente di dati per garantire simulazioni Monte Carlo affidabili. Tramite chiamate API a un terzo servizio, Stooq, è stato possibile popolare un database SQL con dati storici di 10 anni; le API dei primi due servizi vengono invece utilizzate per aggiornare il database con dati più recenti. L'uso della cache Redis consente inoltre di evitare chiamate ridondanti.
+I dati di mercato vengono raccolti tramite chiamate API a diversi servizi, come Alpha Vantage e CoinGecko, che tuttavia offrono un numero limitato di richieste nei piani gratuiti. È stato quindi introdotto un sistema di caching basato su Redis per conservare i dati per 24 ore dalla prima richiesta.
+
+Un’ulteriore criticità è stata la necessità di disporre di una quantità sufficiente di dati per garantire simulazioni Monte Carlo affidabili. Tramite chiamate API a un terzo servizio, Stooq, è stato possibile popolare un database SQL con dati storici di 10 anni; le API dei primi due servizi vengono invece utilizzate per aggiornare il database con dati più recenti. L'uso della cache Redis consente inoltre di evitare chiamate ridondanti.
 
 Infine, è stata sviluppata una visualizzazione interattiva mediante un frontend realizzato in Angular.
 
