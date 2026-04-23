@@ -256,6 +256,10 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
   }
 
   async exportPdf(): Promise<void> {
+    if (!this.montecarlo) {
+      this.snack.open('Avvia la simulazione Monte Carlo prima di esportare il PDF.', 'Chiudi', { duration: 4000 });
+      return;
+    }
     const el = this.dashboardContentRef.nativeElement;
     const canvas = await html2canvas(el, { scale: 2, useCORS: true, logging: false });
     const imgData = canvas.toDataURL('image/png');

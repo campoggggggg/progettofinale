@@ -36,6 +36,43 @@
   font-size: 0.9rem;
 }
 
+/* ── Scenario header card ────────────────────────────────────────── */
+.scenario-header-card mat-card-content {
+  padding: 18px 20px !important;
+}
+
+.scenario-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.scenario-header-logo {
+  height: 52px;
+  width: auto;
+  flex-shrink: 0;
+}
+
+.scenario-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.scenario-header-nome {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #111439;
+  line-height: 1.1;
+}
+
+.scenario-header-desc {
+  font-size: 0.95rem;
+  color: #5C5F7A;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
 /* ── Metrics row ─────────────────────────────────────────────────── */
 .row-top {
   margin-bottom: 2px;
