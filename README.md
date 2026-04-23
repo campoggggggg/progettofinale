@@ -17,16 +17,14 @@
 
 ---
 
-## Obiettivi del Progetto
+## Introduzione
 
-**KoinSim** nasce come piattaforma didattica e decisionale per la gestione di portafogli finanziari. L'applicazione permette di:
+**Koinsim** nasce come piattaforma didattica e decisionale per la gestione di portafogli finanziari; permette di simulare investimenti multipli e di generare proiezioni dei rendimenti tramite il metodo Monte Carlo, un algoritmo computazionale basato sulla ripetizione di campionamenti casuali. 
 
-- **Simulare investimenti** su azioni e criptovalute senza rischiare denaro reale
-- **Analizzare scenari multipli** con budget e composizioni diverse
-- **Proiettare rendimenti futuri** attraverso modelli matematici avanzati
-- **Esplorare distribuzioni probabilistiche** con il metodo Monte Carlo (moto browniano geometrico)
+I dati di mercato vengono raccolti tramite chiamate API a diversi servizi, come Alpha Vantage e CoinGecko, che tuttavia offrono un numero limitato di richieste nei piani gratuiti. È stato quindi introdotto un sistema di caching basato su Redis per conservare i dati per 24 ore dalla prima richiesta. Un’ulteriore criticità è stata la necessità di disporre di una quantità sufficiente di dati per garantire simulazioni Monte Carlo affidabili. Tramite chiamate API a un terzo servizio, Stooq, è stato possibile popolare un database SQL con dati storici di 10 anni; le API dei primi due servizi vengono invece utilizzate per aggiornare il database con dati più recenti. L'uso della cache Redis consente inoltre di evitare chiamate ridondanti.
 
-Il progetto copre l'intero stack applicativo: dalla raccolta di dati di mercato in tempo reale, alla persistenza su database, fino alla visualizzazione interattiva su un frontend Angular.
+Infine, è stata sviluppata una visualizzazione interattiva mediante un frontend realizzato in Angular.
+
 
 ---
 
@@ -73,13 +71,12 @@ Il progetto copre l'intero stack applicativo: dalla raccolta di dati di mercato 
 ### Proiezioni e Performance
 - Valore corrente del portafoglio calcolato in tempo reale
 - P&L | Profit & Loss
-- Proiezioni a **1, 3 e 5 anni**
+- Proiezioni a **6 mesi e 1, 3, 5 anni**
 
 ### Simulazione Monte Carlo (GBM)
-- Modello **Geometric Brownian Motion** con 10.000 percorsi indipendenti
-- Parametri μ [mu] (rendimento medio) e σ [sigma] (variazione standard) calcolati da dati storici reali
-- Distribuzione dei percentili **P10 / P50 / P90**
-- Visualizzazione a schermo della simulazione su assi P&L/tempo
+- Modello **Geometric Brownian Motion** con 10.000 campioni casuali
+- Parametri μ [mu] (rendimento medio) e σ [sigma] (variazione standard) calcolati tramite dati storici reali
+- Distribuzione dei percentili **P10 / P50 / P90** i quali descrivono il caso pessismistico, il più probabile e quello ottimistico
 
 ---
 
@@ -269,7 +266,7 @@ Tutti i container comunicano sulla rete bridge `koinsim_net`. Le credenziali e l
 
 ## Simulazione Monte Carlo — GBM
 
-Il cuore analitico di KoinSim è il modello **Geometric Brownian Motion**:
+La simulazione di Monte Carlo è un moto geometrico browniano, e quindi la sua EDS (equazione differenziale stocastica) ha soluzione:
 
 $$
 S_{t} = S_{t-1} \exp\left( (\mu - \frac{\sigma^2}{2}) \Delta t + \sigma \varepsilon \sqrt{\Delta t} \right)
@@ -279,7 +276,7 @@ dove $\varepsilon \sim \mathcal{N}(0,1)$ è una variabile casuale normale standa
 
 **Processo:**
 1. Calcolo di μ e σ dai rendimenti logaritmici storici di ogni asset
-2. Esecuzione di **10.000 percorsi casuali** con la formula di Monte Carlo
+2. Esecuzione di **10.000 campioni casuali** con la formula di Monte Carlo
 3. Calcolo dei percentili **P10 / P50 / P90** tramite Apache Commons Math
 
 Il risultato è una distribuzione di probabilità del valore futuro del portafoglio, non una singola previsione.

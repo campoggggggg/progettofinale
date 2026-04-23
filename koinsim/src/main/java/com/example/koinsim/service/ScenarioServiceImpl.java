@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ScenarioServiceImpl implements ScenarioService {
 
+    private static final double MAX_BUDGET = 1e19;
+
     private final ScenarioRepository scenarioRepository;
     private final TransazioneScenarioRepository transazioneScenarioRepository;
     private final TransazioneRepository transazioneRepository;
@@ -34,7 +36,7 @@ public class ScenarioServiceImpl implements ScenarioService {
     @Override
     @Transactional
     public ScenarioResponse crea(ScenarioRequest richiesta, String nomeUtente) {
-        if (richiesta.getBudgetIniziale() == null || richiesta.getBudgetIniziale() <= 0) {
+        if (richiesta.getBudgetIniziale() == null || richiesta.getBudgetIniziale() <= 0 || richiesta.getBudgetIniziale() >= MAX_BUDGET) {
             throw new IllegalArgumentException("Il budget iniziale deve essere maggiore di zero");
         }
         Utente utente = trovaUtente(nomeUtente);
@@ -90,7 +92,7 @@ public class ScenarioServiceImpl implements ScenarioService {
                 richiesta.getTipoAsset().name());
 
         double importo = scenario.getBudgetIniziale() * richiesta.getPercentuale() / 100.0;
-        double quantita = importo / prezzoUnitario;
+        double quantitaNuova = importo / prezzoUnitario;
         double spesaAttuale = costoTotale(scenario.getTransazioni());
 
         if (spesaAttuale + importo > scenario.getBudgetIniziale()) {
@@ -98,19 +100,33 @@ public class ScenarioServiceImpl implements ScenarioService {
                     "Spesa totale supererebbe il budget iniziale di " + scenario.getBudgetIniziale());
         }
 
-        Transazione transazione = transazioneRepository.save(Transazione.builder()
-                .simbolo(richiesta.getSimbolo())
-                .tipoAsset(richiesta.getTipoAsset())
-                .quantita(quantita)
-                .prezzoDiAcquisto(prezzoUnitario)
-                .dataAcquisto(LocalDate.now())
-                .utente(scenario.getUtente())
-                .build());
+        Optional<TransazioneScenario> esistente = scenario.getTransazioni().stream()
+                .filter(ts -> ts.getTransazione().getSimbolo().equalsIgnoreCase(richiesta.getSimbolo())
+                        && ts.getTransazione().getTipoAsset() == richiesta.getTipoAsset())
+                .findFirst();
 
-        transazioneScenarioRepository.save(TransazioneScenario.builder()
-                .transazione(transazione)
-                .scenario(scenario)
-                .build());
+        if (esistente.isPresent()) {
+            Transazione t = esistente.get().getTransazione();
+            double qtTotale = t.getQuantita() + quantitaNuova;
+            double prezzoMedio = (t.getQuantita() * t.getPrezzoDiAcquisto() + quantitaNuova * prezzoUnitario) / qtTotale;
+            t.setQuantita(qtTotale);
+            t.setPrezzoDiAcquisto(prezzoMedio);
+            transazioneRepository.save(t);
+        } else {
+            Transazione transazione = transazioneRepository.save(Transazione.builder()
+                    .simbolo(richiesta.getSimbolo())
+                    .tipoAsset(richiesta.getTipoAsset())
+                    .quantita(quantitaNuova)
+                    .prezzoDiAcquisto(prezzoUnitario)
+                    .dataAcquisto(LocalDate.now())
+                    .utente(scenario.getUtente())
+                    .build());
+
+            transazioneScenarioRepository.save(TransazioneScenario.builder()
+                    .transazione(transazione)
+                    .scenario(scenario)
+                    .build());
+        }
     }
 
     @Override

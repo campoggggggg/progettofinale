@@ -9,6 +9,8 @@ import {
   ChangeDetectorRef,
   Input,
 } from '@angular/core';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { CommonModule, CurrencyPipe, PercentPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { Chart } from 'chart.js';
@@ -60,6 +62,7 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
   // Riceve l'id dallo URL (withComponentInputBinding)
   @Input() id!: string;
 
+  @ViewChild('dashboardContent') dashboardContentRef!: ElementRef<HTMLDivElement>;
   @ViewChild('distribuzioneChart') distribuzioneChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('pnlChart') pnlChartRef!: ElementRef<HTMLCanvasElement>;
 
@@ -103,28 +106,15 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
     return Math.max(0, (this.scenario!.budgetRimanente / totalBudget) * 100);
   }
 
-  selectedPercentile: 10 | 50 | 90 = 50;
-
-  get montecarloSummary(): { label: string; pnl: number; pnlPerc: number }[] {
-    if (!this.montecarlo || !this.scenario) return [];
-
+  get montecarloTableData(): { label: string; p10: number; p50: number; p90: number }[] {
+    if (!this.montecarlo) return [];
     const mc = this.montecarlo;
-// sourcery skip: use-object-destructuring
-    const costoTotale = mc.costoTotale;
-    const budget = this.scenario.budgetIniziale;
-    const p = this.selectedPercentile;
-
-    const calc = (r: { percentile10: number; percentile90: number; pnlMediano: number }) => {
-      const pnl = p === 10 ? r.percentile10 - costoTotale
-                : p === 90 ? r.percentile90 - costoTotale
-                : r.pnlMediano;
-      return { pnl, pnlPerc: budget > 0 ? (pnl / budget) * 100 : 0 };
-    };
-
+    const c = mc.costoTotale;
     return [
-      { label: '1 Anno', ...calc(mc.unAnno) },
-      { label: '3 Anni', ...calc(mc.treAnni) },
-      { label: '5 Anni', ...calc(mc.cinqueAnni) },
+      { label: '6 Mesi', p10: mc.seiMesi.percentile10 - c,    p50: mc.seiMesi.pnlMediano,    p90: mc.seiMesi.percentile90 - c },
+      { label: '1 Anno',  p10: mc.unAnno.percentile10 - c,     p50: mc.unAnno.pnlMediano,     p90: mc.unAnno.percentile90 - c },
+      { label: '3 Anni',  p10: mc.treAnni.percentile10 - c,    p50: mc.treAnni.pnlMediano,    p90: mc.treAnni.percentile90 - c },
+      { label: '5 Anni',  p10: mc.cinqueAnni.percentile10 - c, p50: mc.cinqueAnni.pnlMediano, p90: mc.cinqueAnni.percentile90 - c },
     ];
   }
 
@@ -265,6 +255,21 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
     this.router.navigate(['/scenari']);
   }
 
+  async exportPdf(): Promise<void> {
+    const el = this.dashboardContentRef.nativeElement;
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true, logging: false });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgHeight = (canvas.height * pageWidth) / canvas.width;
+    let heightLeft = imgHeight;
+    let position = 0;
+    pdf.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight);
+    heightLeft -= pageHeight;
+    pdf.save(`${this.scenario?.nome ?? 'scenario'}.pdf`);
+  }
+
   // ── Charts ───────────────────────────────────────────────────────────────
 
   private destroyCharts(): void {
@@ -309,12 +314,39 @@ export class ScenarioDashboardComponent implements OnInit, OnDestroy, AfterViewI
 
     if (liquidita > 0) { labels.push('Liquidità'); data.push(liquidita); colors.push('#3498DB'); }
 
+    const sliceLabelsPlugin = {
+      id: 'sliceLabels',
+      afterDatasetsDraw(chart: any) {
+        const { ctx } = chart;
+        const meta = chart.getDatasetMeta(0);
+        const dataset = chart.data.datasets[0];
+        const total = (dataset.data as number[]).reduce((a: number, b: number) => a + b, 0);
+        meta.data.forEach((arc: any, i: number) => {
+          const value = dataset.data[i] as number;
+          const pct = (value / total) * 100;
+          if (pct < 5) return;
+          const mid = (arc.startAngle + arc.endAngle) / 2;
+          const r = (arc.outerRadius + arc.innerRadius) / 2;
+          const x = arc.x + Math.cos(mid) * r;
+          const y = arc.y + Math.sin(mid) * r;
+          ctx.save();
+          ctx.font = 'bold 11px sans-serif';
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(pct.toFixed(1) + '%', x, y);
+          ctx.restore();
+        });
+      },
+    };
+
     const chart = new Chart(this.distribuzioneChartRef.nativeElement, {
       type: 'doughnut',
       data: {
         labels,
         datasets: [{ data, backgroundColor: colors, borderWidth: 2, hoverOffset: 8 }],
       },
+      plugins: [sliceLabelsPlugin],
       options: {
         responsive: true,
         maintainAspectRatio: false,

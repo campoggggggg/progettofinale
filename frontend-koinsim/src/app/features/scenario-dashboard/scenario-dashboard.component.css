@@ -196,48 +196,54 @@ mat-chip.chip-crypto {
   flex-wrap: wrap;
 }
 
-.percentile-toggle {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
-  flex-wrap: wrap;
+/* ── Tabella percentili Monte Carlo ──────────────────────────────── */
+.mc-table-wrapper {
+  margin-top: 20px;
+  overflow-x: auto;
 }
 
-.montecarlo-summary {
-  display: flex;
-  gap: 36px;
-  padding: 10px 0 16px;
-  flex-wrap: wrap;
+.mc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
 }
 
-.mc-item {
-  display: flex;
-  flex-direction: column;
-  min-width: 100px;
-}
-
-.mc-label {
-  font-size: 0.68rem;
+.mc-table th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: #A0A3BD;
-  margin-bottom: 4px;
+  color: #fff;
+  background: #111439;
 }
 
-.mc-median {
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: #0B0D26;
+.mc-table th.col-p10 { background: #c0392b; }
+.mc-table th.col-p50 { background: #2980b9; }
+.mc-table th.col-p90 { background: #27ae60; }
+
+.mc-table td {
+  padding: 9px 14px;
+  border-bottom: 1px solid #EEEEF5;
+  font-weight: 500;
+  color: #111439;
 }
 
-.mc-median.positive {
-  color: #3498DB;
+.mc-table td.row-label {
+  font-weight: 700;
+  color: #5C5F7A;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
-.mc-median.negative {
-  color: #F5B041;
+.mc-table tbody tr:nth-child(even) td {
+  background: #F7F7FC;
 }
+
+.mc-table td.positive { color: #27ae60; }
+.mc-table td.negative { color: #c0392b; }
 
 .legend-dot {
   display: inline-block;
@@ -275,6 +281,15 @@ mat-chip.chip-crypto {
   .montecarlo-summary {
     gap: 20px;
   }
+}
+
+/* ── Export PDF FAB ──────────────────────────────────────────────── */
+.export-pdf-fab {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 100;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.22);
 }
 
 @media (max-width: 480px) {

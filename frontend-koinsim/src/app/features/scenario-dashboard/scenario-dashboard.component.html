@@ -20,7 +20,7 @@
 }
 
 @if (!loading && scenario) {
-  <div class="dash-container">
+  <div class="dash-container" #dashboardContent>
 
     <!-- ════════════════════════════════════════════════════════════════
          RIGA 1: metriche budget
@@ -228,14 +228,16 @@
       <mat-card-header>
         <mat-card-title>Simulazione Monte Carlo</mat-card-title>
         <span class="spacer"></span>
-        <div class="pnl-legend">
-          <span class="legend-dot" style="background:#E74C3C"></span>
-          <span>10° Percentile</span>
-          <span class="legend-dot" style="background:#3498DB;margin-left:12px"></span>
-          <span>50° Percentile</span>
-          <span class="legend-dot" style="background:#2ECC71;margin-left:12px"></span>
-          <span>90° Percentile</span>
-        </div>
+        @if (montecarlo) {
+          <div class="pnl-legend">
+            <span class="legend-dot" style="background:#E74C3C"></span>
+            <span>10° Percentile</span>
+            <span class="legend-dot" style="background:#3498DB;margin-left:12px"></span>
+            <span>50° Percentile</span>
+            <span class="legend-dot" style="background:#2ECC71;margin-left:12px"></span>
+            <span>90° Percentile</span>
+          </div>
+        }
       </mat-card-header>
 
       <mat-card-content>
@@ -258,28 +260,53 @@
             </div>
           }
         } @else {
-          <div class="percentile-toggle">
-            <button mat-stroked-button [color]="selectedPercentile === 10 ? 'primary' : undefined" (click)="selectedPercentile = 10">10° Percentile</button>
-            <button mat-stroked-button [color]="selectedPercentile === 50 ? 'primary' : undefined" (click)="selectedPercentile = 50">50° Mediano</button>
-            <button mat-stroked-button [color]="selectedPercentile === 90 ? 'primary' : undefined" (click)="selectedPercentile = 90">90° Percentile</button>
-          </div>
-          <div class="montecarlo-summary">
-            @for (orizzonte of montecarloSummary; track orizzonte.label) {
-              <div class="mc-item">
-                <div class="mc-label">{{ orizzonte.label }}</div>
-                <div class="mc-median" [class.positive]="orizzonte.pnl >= 0" [class.negative]="orizzonte.pnl < 0">
-                  {{ orizzonte.pnl >= 0 ? '+' : '' }}{{ orizzonte.pnl | currency:'USD':'symbol':'1.0-0' }}
-                  ({{ orizzonte.pnl >= 0 ? '+' : '' }}{{ orizzonte.pnlPerc | number:'1.1-1' }}%)
-                </div>
-              </div>
-            }
-          </div>
           <div class="chart-container" style="height:280px">
             <canvas #pnlChart></canvas>
+          </div>
+          <div class="mc-table-wrapper">
+            <table class="mc-table">
+              <thead>
+                <tr>
+                  <th>Orizzonte</th>
+                  <th class="col-p10">10° Percentile</th>
+                  <th class="col-p50">50° Mediano</th>
+                  <th class="col-p90">90° Percentile</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of montecarloTableData; track row.label) {
+                  <tr>
+                    <td class="row-label">{{ row.label }}</td>
+                    <td [class.negative]="row.p10 < 0" [class.positive]="row.p10 >= 0">
+                      {{ row.p10 >= 0 ? '+' : '' }}{{ row.p10 | currency:'USD':'symbol':'1.0-0' }}
+                    </td>
+                    <td [class.negative]="row.p50 < 0" [class.positive]="row.p50 >= 0">
+                      {{ row.p50 >= 0 ? '+' : '' }}{{ row.p50 | currency:'USD':'symbol':'1.0-0' }}
+                    </td>
+                    <td [class.negative]="row.p90 < 0" [class.positive]="row.p90 >= 0">
+                      {{ row.p90 >= 0 ? '+' : '' }}{{ row.p90 | currency:'USD':'symbol':'1.0-0' }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
         }
       </mat-card-content>
     </mat-card>
 
   </div>
+
+  <!-- Pulsante Esporta PDF fisso in basso a destra -->
+  <button
+    mat-fab
+    extended
+    color="primary"
+    class="export-pdf-fab"
+    (click)="exportPdf()"
+    matTooltip="Scarica il report in PDF"
+  >
+    <mat-icon>picture_as_pdf</mat-icon>
+    Esporta PDF
+  </button>
 }
