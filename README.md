@@ -321,6 +321,6 @@ GET    /api/market-data/simboli                       Lista simboli con dati sto
 | Nome | GitHub | LinkedIn |
 |---|---|---|---|
 | **Maria Baylon** | [![GitHub](https://img.shields.io/badge/GitHub-your--username-181717?style=flat&logo=github)](https://github.com/bayloncina) | [![LinkedIn](https://img.shields.io/badge/LinkedIn-Maria_Baylon-0A66C2?style=flat&logo=linkedin)](https://www.linkedin.com/in/maria-baylon/) |
-| **Gabriele Campomizzi** | [![GitHub](https://img.shields.io/badge/GitHub-your--username-181717?style=flat&logo=github)](https://github.com/campoggggggg) | [![LinkedIn](https://img.shields.io/badge/LinkedIn-Gabriele-0A66C2?style=flat&logo=linkedin)](https://linkedin.com/campog) |
+| **Gabriele Campomizzi** | [![GitHub](https://img.shields.io/badge/GitHub-your--username-181717?style=flat&logo=github)](https://github.com/campoggggggg) | [![LinkedIn](https://img.shields.io/badge/LinkedIn-Gabriele-0A66C2?style=flat&logo=linkedin)](https://linkedin.com/in/campog) |
 
 </div>
