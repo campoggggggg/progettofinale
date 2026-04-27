@@ -15,6 +15,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Service per il recupero dei prezzi degli asset finanziari (crypto e azioni).
+ * Interroga CoinGecko per le criptovalute e Alpha Vantage per le azioni.
+ * In caso di errore API, ricade sull'ultimo prezzo disponibile nel database.
+ */
 @Service
 public class PrezzoService {
 
@@ -34,6 +39,10 @@ public class PrezzoService {
         this.prezzoStoricoRepository = prezzoStoricoRepository;
     }
 
+    /**
+     * Restituisce il prezzo corrente dell'asset, delegando al metodo specifico
+     * in base al tipo ("CRYPTO" o "STOCK").
+     */
     public Double getPrezzo(String simbolo, String tipoAsset) {
         return switch (tipoAsset.toUpperCase()) {
             case "CRYPTO" -> getPrezzoSimbolo(simbolo);
@@ -42,6 +51,11 @@ public class PrezzoService {
         };
     }
 
+    /**
+     * Recupera il prezzo corrente di una criptovaluta tramite l'API CoinGecko.
+     * Il risultato è cachato per simbolo per evitare chiamate ripetute.
+     * Fallback: restituisce l'ultimo prezzo storico presente nel DB.
+     */
     @Cacheable(value = "prezziCrypto", key = "#simbolo")
     public Double getPrezzoSimbolo(String simbolo) {
         String url = "https://api.coingecko.com/api/v3/simple/price"
@@ -70,6 +84,12 @@ public class PrezzoService {
         }
     }
 
+    /**
+     * Recupera il prezzo corrente di un'azione tramite Alpha Vantage (GLOBAL_QUOTE).
+     * Il risultato è cachato per simbolo per evitare chiamate ripetute.
+     * Gestisce esplicitamente il rate limit di Alpha Vantage (chiavi "Information"/"Note").
+     * Fallback: restituisce l'ultimo prezzo storico presente nel DB.
+     */
     @Cacheable(value = "prezziStock", key = "#simbolo")
     public Double getPrezzoAzione(String simbolo) {
         String url = "https://www.alphavantage.co/query"
@@ -100,6 +120,10 @@ public class PrezzoService {
         }
     }
 
+    /**
+     * Restituisce il prezzo dell'asset in una data specifica,
+     * delegando al metodo specifico in base al tipo ("CRYPTO" o "STOCK").
+     */
     public Double getPrezzoStorico(String simbolo, String tipoAsset, LocalDate data) {
         return switch (tipoAsset.toUpperCase()) {
             case "CRYPTO" -> getPrezzoStoricoCrypto(simbolo, data);
@@ -108,7 +132,11 @@ public class PrezzoService {
         };
     }
 
-    // CoinGecko: market_chart/range con finestra di 2 giorni intorno alla data
+    /**
+     * Recupera il prezzo storico di una crypto per una data specifica via CoinGecko
+     * (endpoint market_chart/range con finestra [data, data+1g in UTC).
+     * Restituisce il primo prezzo disponibile nell'intervallo.
+     */
     public Double getPrezzoStoricoCrypto(String simbolo, LocalDate data) {
         long from = data.atStartOfDay(ZoneOffset.UTC).toEpochSecond();
         long to   = data.plusDays(1).atStartOfDay(ZoneOffset.UTC).toEpochSecond();
@@ -132,7 +160,10 @@ public class PrezzoService {
                 }).block();
     }
 
-    // Alpha Vantage: TIME_SERIES_DAILY → estrae il giorno → (high + low) / 2
+    /**
+     * Recupera il prezzo storico di un'azione per una data specifica via Alpha Vantage
+     * (TIME_SERIES_DAILY). Il prezzo restituito è la media tra high e low del giorno.
+     */
     public Double getPrezzoStoricoStock(String simbolo, LocalDate data) {
         String dataFormattata = data.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         String url = "https://www.alphavantage.co/query"
