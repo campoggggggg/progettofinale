@@ -1,6 +1,9 @@
 <div align="center">
 
 # KoinSim
+<div align="center">
+  <img src="frontend-koinsim/src/assets/logo.svg" alt="Logo" width="200"/>
+</div>
 
 ### Simulatore di Portafoglio Finanziario con Monte Carlo
 
