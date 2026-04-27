@@ -324,3 +324,8 @@ GET    /api/market-data/simboli                       Lista simboli con dati sto
 | **Gabriele Campomizzi** | [![GitHub](https://img.shields.io/badge/GitHub-campoggggggg-181717?style=flat&logo=github)](https://github.com/campoggggggg) | [![LinkedIn](https://img.shields.io/badge/LinkedIn-Gabriele_Campomizzi-0A66C2?style=flat&logo=linkedin)](https://linkedin.com/in/campog) |
 
 </div>
+
+
+<div>
+  <img src="https://komarev.com/ghpvc/?username=bayloncina&label=Visitatori&color=DD0031&style=for-the-badge" alt="visitor badge"/>
+</div>
