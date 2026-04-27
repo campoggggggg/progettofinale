@@ -1,6 +1,9 @@
 <div align="center">
 
 # KoinSim
+<div align="center">
+  <img src="frontend-koinsim/src/assets/logo.svg" alt="Logo" width="200"/>
+</div>
 
 ### Simulatore di Portafoglio Finanziario con Monte Carlo
 
@@ -323,4 +326,8 @@ GET    /api/market-data/simboli                       Lista simboli con dati sto
 | **Maria Baylon** | [![GitHub](https://img.shields.io/badge/GitHub-bayloncina-181717?style=flat&logo=github)](https://github.com/bayloncina) | [![LinkedIn](https://img.shields.io/badge/LinkedIn-Maria_Baylon-0A66C2?style=flat&logo=linkedin)](https://www.linkedin.com/in/maria-baylon/) |
 | **Gabriele Campomizzi** | [![GitHub](https://img.shields.io/badge/GitHub-campoggggggg-181717?style=flat&logo=github)](https://github.com/campoggggggg) | [![LinkedIn](https://img.shields.io/badge/LinkedIn-Gabriele_Campomizzi-0A66C2?style=flat&logo=linkedin)](https://linkedin.com/in/campog) |
 
+</div>
+
+<div align="center">
+  <img src="https://komarev.com/ghpvc/?username=campoggggggg&label=Visitatori&color=DD0031&style=for-the-badge" alt="visitor badge"/>
 </div>
