@@ -325,7 +325,6 @@ GET    /api/market-data/simboli                       Lista simboli con dati sto
 
 </div>
 
-
-<div>
-  <img src="https://komarev.com/ghpvc/?username=bayloncina&label=Visitatori&color=DD0031&style=for-the-badge" alt="visitor badge"/>
+<div align="center">
+  <img src="https://komarev.com/ghpvc/?username=campoggggggg&label=Visitatori&color=DD0031&style=for-the-badge" alt="visitor badge"/>
 </div>
