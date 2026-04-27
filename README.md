@@ -80,6 +80,9 @@ Infine, è stata sviluppata una visualizzazione interattiva mediante un frontend
 - Parametri μ [mu] (rendimento medio) e σ [sigma] (variazione standard) calcolati tramite dati storici reali
 - Distribuzione dei percentili **P10 / P50 / P90** i quali descrivono il caso pessismistico, il più probabile e quello ottimistico
 
+### Esportazione in PDF
+- Possibilità di esportare la dashboard come file .pdf
+
 ---
 
 ## Architettura del Database
@@ -313,11 +316,11 @@ GET    /api/market-data/simboli                       Lista simboli con dati sto
 
 <div align="center">
 
-## Autori
+## 👥 Autori
 
 | Nome | GitHub | LinkedIn |
-|---|---|---|---|
-| **Maria Baylon** | [![GitHub](https://img.shields.io/badge/GitHub-your--username-181717?style=flat&logo=github)](https://github.com/bayloncina) | [![LinkedIn](https://img.shields.io/badge/LinkedIn-Maria_Baylon-0A66C2?style=flat&logo=linkedin)](https://www.linkedin.com/in/maria-baylon/) |
-| **Gabriele Campomizzi** | [![GitHub](https://img.shields.io/badge/GitHub-your--username-181717?style=flat&logo=github)](https://github.com/campoggggggg) | [![LinkedIn](https://img.shields.io/badge/LinkedIn-Gabriele-0A66C2?style=flat&logo=linkedin)](https://linkedin.com/campog) |
+|:----:|:------:|:--------:|
+| **Maria Baylon** | [![GitHub](https://img.shields.io/badge/GitHub-bayloncina-181717?style=flat&logo=github)](https://github.com/bayloncina) | [![LinkedIn](https://img.shields.io/badge/LinkedIn-Maria_Baylon-0A66C2?style=flat&logo=linkedin)](https://www.linkedin.com/in/maria-baylon/) |
+| **Gabriele Campomizzi** | [![GitHub](https://img.shields.io/badge/GitHub-campoggggggg-181717?style=flat&logo=github)](https://github.com/campoggggggg) | [![LinkedIn](https://img.shields.io/badge/LinkedIn-Gabriele_Campomizzi-0A66C2?style=flat&logo=linkedin)](https://linkedin.com/in/campog) |
 
 </div>

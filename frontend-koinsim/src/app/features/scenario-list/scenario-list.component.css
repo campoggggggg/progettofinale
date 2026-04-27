@@ -118,3 +118,31 @@
 .spacer {
   flex: 1 1 auto;
 }
+
+/* ── Home toolbar tagline ────────────────────────────────────────── */
+.home-toolbar {
+  position: relative;
+}
+
+.toolbar-tagline {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  line-height: 1.25;
+  pointer-events: none;
+}
+
+.tag-koin {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+.tag-rest {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #39FF14;
+  letter-spacing: 0.5px;
+}
